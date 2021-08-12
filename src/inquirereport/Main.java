@@ -13,18 +13,11 @@ import java.util.stream.Collectors;
 
 /**
  * This is the main class of this project. It allows users to create generate
- * CSV or JSON reports out of the Inquire data and load them to Google Sheets
+ * Calls on the Inquire client to get shared query data and can both generate CSV or JSON reports, and load the data to Google Sheets or to an Azure SQL Database.
  *
- * @author Reuven Farchi, Mark Jones, Elizabeth Stovall
+ * @author Reuven Farchi, Elizabeth Stovall, Mark Jones
  */
 public class Main {
-    /**
-     * @param args command line arguments, 3 or 5 arguments are expected:
-     *             <config.properties> : mandatory, the configuration file including login credentials
-     *             <report> : mandatory, type of required report
-     *             <output_folder> : mandatory, path to the output location
-     *             <from_date|to_date> : optional, constrain on query search date/time range.
-     */
     public static void main(String[] args) throws GeneralSecurityException, IOException {
 
 
@@ -32,8 +25,8 @@ public class Main {
         if (args.length == 0 || args.length == 4 || args.length > 5) {
             System.out.println(
                     "ERROR: Wrong number of parameters. \n"
-                            + "Usage: java -jar \"Inquire_Extract.jar\" <config.properties> [<published query> <output_folder> <from_date> <to_date4>]\n"
-                            + "\t- config.properties: configuration file. e.g. src/tqlquery/test_config.properties\n"
+                            + "Usage: java -jar \"InquireETL.jar\" <config.properties> [<published query> <output_folder> <from_date> <to_date>]\n"
+                            + "\t- config.properties: configuration files directory. e.g. src/tqlquery/test_config.properties\n"
                             + "\t- published query: optional. name of published query required. This is not case-sensitive. Defaults to the value 'all' which produces all published queries in the LDS.\n"
                             + "\t- output_folder: optional. The output location for the reports, e.g. ./output/. System Temp folder will be used as default\n"
                             + "\t- from_date: optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
