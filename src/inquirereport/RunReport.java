@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -48,7 +49,7 @@ public class RunReport {
 
             // Export all shared/published queries
             Collection<SharedQuery> sharedQueries = clientES.getSharedQueries(lds_name);
-            ArrayList<String> usageQueries = new ArrayList<String>();
+            ArrayList<String> usageQueries = new ArrayList<>();
             usageQueries.add("Usage_–_Transactions");
             usageQueries.add("Usage_–_Sessions");
             usageQueries.add("Usage_–_Standard_Usage");
@@ -70,11 +71,10 @@ public class RunReport {
         } catch (Exception e) {
             System.out.println("ERROR: An error has occurred while processing LDS " + lds_name + ". Will continue processing the others, please run this one again.");
             System.out.println(e.getMessage());
-            System.out.println(e);
         }
     }
 
-    private static String fileOutput(String fileFormat, Iterable<Map<String, Object>> results, String fileName, String path) {
+    private static void fileOutput(String fileFormat, Iterable<Map<String, Object>> results, String fileName, String path) {
 
         //replace bad chars in filename
         fileName = sanitizeFilename(fileName);
@@ -82,8 +82,9 @@ public class RunReport {
         // create the output folder if it does not exist
         File directory = new File(String.valueOf(path));
         if (!directory.exists()) {
-            System.out.println("Making directory " + directory.getPath());
-            directory.mkdirs();
+            boolean mkdirsSuccess = directory.mkdirs();
+            System.out.println((mkdirsSuccess ? "Success making " : "Failed to make") + " directory: " + directory.getPath());
+
         }
 
         String outputFileName = fileName;
@@ -98,15 +99,14 @@ public class RunReport {
 
         if (fileFormat.equalsIgnoreCase("json")) {
             // Write out to JSON
-            writeResultstoJson(results, outputFileName);
+            writeResultsToJson(results, outputFileName);
         } else {
             // Write out to text files
             writeResultstoText(results, outputFileName, fileFormat);
         }
-        return outputFileName;
     }
 
-    private static void writeResultstoJson(Iterable<Map<String, Object>> results, String fullFileName) {
+    private static void writeResultsToJson(Iterable<Map<String, Object>> results, String fullFileName) {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -120,12 +120,12 @@ public class RunReport {
                                            String fullFileName,
                                            String separator) {
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(fullFileName), "utf-8"))) {
+                new FileOutputStream(fullFileName), StandardCharsets.UTF_8))) {
 
             boolean headerDisplayed = false;
             for (Map<String, Object> map : results) {
-                List header = new ArrayList();
-                List row = new ArrayList();
+                List<String> header = new ArrayList<>();
+                List<String> row = new ArrayList<>();
                 map.entrySet().stream().forEach((entry) -> {
                     header.add("\"" + entry.getKey() + "\"");
                     row.add("\"" + entry.getValue().toString().replace("\"", "\"\"") + "\"");

@@ -5,35 +5,38 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * This is the main class of this project. It allows users to create generate
- * CSV or JSON reports out of the Inquire data and load them to Google Sheets
+ * CSV or JSON reports out of Inquire data and load them to an SQL server
  *
  * @author Reuven Farchi, Mark Jones, Elizabeth Stovall
  */
 public class Main {
     /**
-     * @param args command line arguments, 3 or 5 arguments are expected:
-     *             <config.properties> : mandatory, the configuration file including login credentials
-     *             <report> : mandatory, type of required report
-     *             <output_folder> : mandatory, path to the output location
-     *             <from_date|to_date> : optional, constrain on query search date/time range.
+     * @param args command line arguments:
+     *             --config <config.properties> : Mandatory. configuration file or directory e.g. etc/ or test_config.properties. If a directory is selected the application will iterate over all *_config.properties files found in the directory.\n"
+     *             --query <published query>: Optional. name of published query required. This is not case-sensitive. Defaults to the value 'all' which produces all published queries in the LDS.\n"
+     *             --output <output_folder>: Optional. The output location for the reports, e.g. ./output/. System Temp folder will be used as default\n"
+     *             --from <from_date>: Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
+     *             --to <to_date>: Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
      */
     public static void main(String[] args) throws GeneralSecurityException, IOException {
 
+        HashMap<String, String> argsMap = new HashMap<>();
+        for (String arg : args) {
+            String[] splitArg = arg.split("--|=");
+            argsMap.put(splitArg[1], splitArg[2]);
+        }
 
         // Check for the command line arguments
-        if (args.length == 0 || args.length == 4 || args.length > 5) {
+        if (!argsMap.containsKey("config") || argsMap.containsKey("help")) {
             System.out.println(
-                    "ERROR: Wrong number of parameters. \n"
-                            + "Usage: java -jar \"Inquire_Extract.jar\" <config.properties> [<published query> <output_folder> <from_date> <to_date4>]\n"
-                            + "\t- config.properties: configuration file. e.g. src/tqlquery/test_config.properties\n"
+                    "Parameter usage: \n"
+                            + "Usage: java -jar \"Inquire_Extract.jar\" --config=<config.properties> [--query=<published query> --output=<output_folder> --from=<from_date> --to=<to_date>]\n"
+                            + "\t- config.properties: configuration file or directory e.g. etc/ or test_config.properties. If a directory is selected the application will iterate over all *_config.properties files found in the directory.\n"
                             + "\t- published query: optional. name of published query required. This is not case-sensitive. Defaults to the value 'all' which produces all published queries in the LDS.\n"
                             + "\t- output_folder: optional. The output location for the reports, e.g. ./output/. System Temp folder will be used as default\n"
                             + "\t- from_date: optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
@@ -42,32 +45,26 @@ public class Main {
             System.exit(0);
         }
 
-        StringBuilder configFilesPath = new StringBuilder(args[0]);
-        String queryName = "all";
-        String outputFolderPath = "";
-        String dateFrom = null;
-        String dateTo = null;
+        StringBuilder configFilesPath = new StringBuilder(argsMap.get("config"));
+        boolean isConfigPathDir = new File(configFilesPath.toString()).isDirectory();
 
-        configFilesPath.append(configFilesPath.charAt(configFilesPath.length() - 1) == '/' ? "" : "/");
+        String queryName = argsMap.getOrDefault("query", "all");
 
-        if (args.length >= 2) {
-            queryName = args[1];
-        }
-        if (args.length >= 3) {
-            outputFolderPath = args[2];
-            outputFolderPath += (outputFolderPath.charAt(outputFolderPath.length() - 1) == '/' ? "" : "/");
+        String outputFolderPath = argsMap.getOrDefault("output", System.getProperty("java.io.tmpdir") + "/inquire_exporter/");
+        outputFolderPath += (outputFolderPath.charAt(outputFolderPath.length() - 1) == '/' ? "" : "/");
+
+        String dateFrom = argsMap.getOrDefault("from", null);
+        String dateTo = argsMap.getOrDefault("to", null);
+
+
+        File[] files;
+        if (isConfigPathDir) {
+            configFilesPath.append(configFilesPath.charAt(configFilesPath.length() - 1) == '/' ? "" : "/");
+            files = new File(configFilesPath.toString()).listFiles((dir, name) -> name.endsWith(".properties"));
         } else {
-            outputFolderPath = System.getProperty("java.io.tmpdir") + "/inquire_exporter/";
+            files = new File[1];
+            files[0] = new File(configFilesPath.toString());
         }
-
-
-        if (args.length == 5) {
-            // Dates must be format yyyy-MM-dd e.g. 2017-08-31T23:55:01Z
-            dateFrom = args[3];
-            dateTo = args[4];
-        }
-
-        File[] files = new File(configFilesPath.toString()).listFiles((dir, name) -> name.endsWith(".properties"));
 
         if (files == null) {
             throw new IOException("No properties files found in supplied directory.");
@@ -75,7 +72,7 @@ public class Main {
         for (File file : files) {
             if (file.isFile()) {
                 String fileName = file.getName();
-                String filePath = configFilesPath + fileName;
+                String filePath = configFilesPath + (isConfigPathDir ? fileName : "");
                 System.out.println("Currently processing " + filePath);
 
                 String currentOutputFolderPath = outputFolderPath + (fileName.split("_config")[0] + "/");
@@ -98,9 +95,6 @@ public class Main {
                     String password = prop.getProperty("password");
                     String separator = prop.getProperty("separator");
                     String timeout = prop.getProperty("timeout");
-                    String credentials = prop.getProperty("credentials");
-                    String appName = prop.getProperty("appName");
-                    String sheetId = prop.getProperty("sheetId");
 
 
                     //Check for required
@@ -119,15 +113,7 @@ public class Main {
                     if (password == null) {
                         missingProperties += "\t- password: mandatory. user password to access the LDS\n";
                     }
-                    if (credentials == null) {
-                        missingProperties += "\t- credentials: mandatory. The path to the Google API credentials file.\n";
-                    }
-                    if (appName == null) {
-                        missingProperties += "\t- appName: mandatory. The name of the Google App to which the service account is linked, e.g. Inquire Exporter.";
-                    }
-                    if (sheetId == null) {
-                        missingProperties += "\t- sheetId: mandatory. The Id of the Google Sheet document. It is a long hash that can be found in the browser's url bar.";
-                    }
+
 
                     //Check if any mandatory ones have been missed
                     if (!missingProperties.equals("")) {
@@ -157,7 +143,6 @@ public class Main {
                     timeout = timeout != null ? timeout : "30";
                     Thread.sleep(1000);
                     RunReport.start(queryName, currentOutputFolderPath, dateFrom, dateTo, backend_URL, username, password, lds_name, separator, timeout);
-                    GoogleSheetData.load(credentials, appName, sheetId, currentOutputFolderPath);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                     System.out.println(
