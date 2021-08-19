@@ -3,3 +3,5 @@
 /target/
 /CircleKDashboardQueries.iml
 /reports/
+/etc/credentials.json
+/configs/
