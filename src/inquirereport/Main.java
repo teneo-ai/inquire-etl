@@ -18,6 +18,7 @@ public class Main {
     /**
      * @param args command line arguments:
      *             --help: Optional : Displays command line and property file help.
+     *             --export_only: Optional : Do not create new reports, export the data in the output folder only.
      *             --google_sheets: Optional: Loads the data into Google Sheets.
      *             --azure_sql: Optional: Loads the data into Azure SQL.
      *             --config  : Optional. configuration file or directory e.g. etc/ or test_config.properties. If a directory is selected the application will iterate over all *_config.properties files found in the directory.Defaults to application root."
@@ -25,12 +26,12 @@ public class Main {
      *             --from : Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
      *             --to : Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
      */
-    public static void main(String[] args) throws GeneralSecurityException, IOException {
+    public static void main(String[] args) throws IOException {
 
         HashMap<String, String> argsMap = new HashMap<>();
         for (String arg : args) {
             String[] splitArg = arg.split("-{1,2}|=");
-            argsMap.put(splitArg[1], (splitArg.length > 2 ? splitArg[2]: "" ));
+            argsMap.put(splitArg[1], (splitArg.length > 2 ? splitArg[2] : ""));
         }
 
         if (argsMap.containsKey("help")) {
@@ -47,6 +48,7 @@ public class Main {
         String dateTo = argsMap.getOrDefault("to", null);
         boolean exportToSheets = argsMap.containsKey("google_sheets");
         boolean exportToSql = argsMap.containsKey("azure_sql");
+        boolean exportOnly = argsMap.containsKey("export_only");
 
 
         File[] configFiles;
@@ -79,10 +81,10 @@ public class Main {
 
 
                     // Check all required properties are found
-                    String backend_URL = prop.getProperty("backend");
+                    String backend_URL = prop.getProperty("inquireBackend");
                     String lds_name = prop.getProperty("lds");
-                    String username = prop.getProperty("user");
-                    String password = prop.getProperty("password");
+                    String username = prop.getProperty("inquireUser");
+                    String password = prop.getProperty("inquirePassword");
 
                     String separator = prop.getProperty("separator");
                     String timeout = prop.getProperty("timeout");
@@ -97,6 +99,11 @@ public class Main {
                     String googleCredentialsPath = prop.getProperty("googleCredentialsPath");
                     String googleCloudAppName = prop.getProperty("googleCloudAppName");
                     String googleSheetId = prop.getProperty("googleSheetId");
+
+                    String azureServerName = prop.getProperty("azureServerName");
+                    String azureDatabaseName = prop.getProperty("azureDatabaseName");
+                    String azureUser = prop.getProperty("azureUser");
+                    String azurePassword = prop.getProperty("azurePassword");
 
 
                     //Check for required
@@ -127,16 +134,19 @@ public class Main {
                     if (googleSheetId == null && exportToSheets) {
                         missingProperties += "\t- googleSheetId: mandatory. The Id of the Google Sheet document. It is a long hash that can be found in the browser's url bar.\n";
                     }
-//                    //Azure SQL
-//                    if (azureCredentialsPath == null && exportToSheets) {
-//                        missingProperties += "\t- azureCredentialsPath: mandatory. The path to the Azure API credentials file.\n";
-//                    }
-//                    if (azureCloudAppName == null && exportToSheets) {
-//                        missingProperties += "\t- azureCloudAppName: mandatory. The name of the Azure App to which the service account is linked, e.g. Inquire Exporter.\n";
-//                    }
-//                    if (azureSheetId == null && exportToSheets) {
-//                        missingProperties += "\t- azureSheetId: mandatory. The Id of the Azure Sheet document. It is a long hash that can be found in the browser's url bar.\n";
-//                    }
+                    //Azure SQL
+                    if (azureServerName == null && exportToSql) {
+                        missingProperties += "\t- azureServerName: mandatory. The name of the server as it appears in the Azure AQL Database overview.\n";
+                    }
+                    if (azureDatabaseName == null && exportToSql) {
+                        missingProperties += "\t- azureDatabaseName: mandatory. The name of the database as it appears in the Azure AQL Database overview.\n";
+                    }
+                    if (azureUser == null && exportToSql) {
+                        missingProperties += "\t- azureUser: mandatory. Database username with permissions to create tables and add data.\n";
+                    }
+                    if (azurePassword == null && exportToSql) {
+                        missingProperties += "\t- azurePassword: mandatory. Password for the Azure user.\n";
+                    }
 
 
                     //Check if any mandatory ones have been missed
@@ -162,26 +172,33 @@ public class Main {
                         }
                     }
 
+
                     //Apply defaults for export type
                     separator = separator != null ? separator : "json";
                     timeout = timeout != null ? timeout : "30";
                     Thread.sleep(1000);
-                    HashMap<String, Iterable<Map<String, Object>>> reportMap = RunReport.start(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
-                    System.out.println(Objects.requireNonNull(reportMap).entrySet());
+                  if(!exportOnly) {
+                      HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
+                      System.out.println(Objects.requireNonNull(reportMap).entrySet());
 
-                    for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
-                        if (exportToSheets && !separator.equals("json")) {
-                            OutputFile.fileOutput("json", report, outputFolderPath);
-                        }
-                        if (exportToSql && !separator.equals(",")) {
-                            OutputFile.fileOutput(",", report, outputFolderPath);
-                        }
-                        OutputFile.fileOutput(separator, report, outputFolderPath);
-                    }
+                      for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
+                          if (exportToSheets && !separator.equals("json")) {
+                              LocalFile.output("json", report, outputFolderPath);
+                          }
+                          if (exportToSql && !separator.equals(",")) {
+                              LocalFile.output(",", report, outputFolderPath);
+                          }
+                          LocalFile.output(separator, report, outputFolderPath);
+                      }
+                  }
 
                     if (exportToSheets) {
-                        GoogleSheetData.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
+                        GoogleSheetExport.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
                     }
+                    if (exportToSql) {
+                        AzureSqlExport.load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
+                    }
+
 
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
@@ -190,9 +207,9 @@ public class Main {
                                     .map(StackTraceElement::toString)
                                     .collect(Collectors.joining("\n"))
                     );
-
+                    printHelp();
                 }
-                printHelp();
+
 
             }
         }
@@ -221,9 +238,13 @@ public class Main {
                         "\t- lds: mandatory. The name of the LDS.\n" +
                         "\t- username: mandatory. user name to access the LDS\n" +
                         "\t- password: mandatory. user password to access the LDS\n" +
-                        "\t- googleCredentialsPath: mandatory. The path to the Google API credentials file.\n" +
-                        "\t- googleCloudAppName: mandatory. The name of the Google App to which the service account is linked, e.g. Inquire Exporter.\n" +
-                        "\t- googleSheetId: mandatory. The Id of the Google Sheet document. It is a long hash that can be found in the browser's url bar.\n" +
+                        "\t- googleCredentialsPath: mandatory if --google_sheets is used. The path to the Google API credentials file.\n" +
+                        "\t- googleCloudAppName: mandatory if --google_sheets is used. The name of the Google App to which the service account is linked, e.g. Inquire Exporter.\n" +
+                        "\t- googleSheetId: mandatory if --google_sheets is used. The Id of the Google Sheet document. It is a long hash that can be found in the browser's url bar.\n" +
+                        "\t- azureServerName: mandatory if --azure_sql is used. The name of the server as it appears in the Azure SQL Database overview.\n" +
+                        "\t- azureDatabaseName: mandatory if --azure_sql is used.. The name of the database as it appears in the Azure SQL Database overview.\n" +
+                        "\t- azureUser: mandatory if --azure_sql is used.. Database username with permissions to create tables and add data.\n" +
+                        "\t- azurePassword: mandatory if --azure_sql is used. Password for the Azure user.\n" +
                         "\t- separator: optional. Separator used between fields in the output files. Defaults to 'json'.\n" +
                         "\t- timeout: optional. Timeout for queries. Defaults to 30 seconds."
 
