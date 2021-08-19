@@ -233,7 +233,7 @@ public class Main {
                         "\tDate for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z.\n" +
                         "\tMust have a from_date if used.\n\n" +
                         "Configurations:\n" +
-                        "Usage: create a \n" +
+                        "Usage: create a *_config.properties file with the following entries: \n" +
                         "- backend: mandatory. The URL to the Teneo Inquire backend\n" +
                         "\t- lds: mandatory. The name of the LDS.\n" +
                         "\t- username: mandatory. user name to access the LDS\n" +
@@ -242,8 +242,8 @@ public class Main {
                         "\t- googleCloudAppName: mandatory if --google_sheets is used. The name of the Google App to which the service account is linked, e.g. Inquire Exporter.\n" +
                         "\t- googleSheetId: mandatory if --google_sheets is used. The Id of the Google Sheet document. It is a long hash that can be found in the browser's url bar.\n" +
                         "\t- azureServerName: mandatory if --azure_sql is used. The name of the server as it appears in the Azure SQL Database overview.\n" +
-                        "\t- azureDatabaseName: mandatory if --azure_sql is used.. The name of the database as it appears in the Azure SQL Database overview.\n" +
-                        "\t- azureUser: mandatory if --azure_sql is used.. Database username with permissions to create tables and add data.\n" +
+                        "\t- azureDatabaseName: mandatory if --azure_sql is used. The name of the database as it appears in the Azure SQL Database overview.\n" +
+                        "\t- azureUser: mandatory if --azure_sql is used. Database username with permissions to create tables and add data.\n" +
                         "\t- azurePassword: mandatory if --azure_sql is used. Password for the Azure user.\n" +
                         "\t- separator: optional. Separator used between fields in the output files. Defaults to 'json'.\n" +
                         "\t- timeout: optional. Timeout for queries. Defaults to 30 seconds."
