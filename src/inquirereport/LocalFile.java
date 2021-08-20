@@ -63,7 +63,7 @@ public class LocalFile {
                 List<String> row = new ArrayList<>();
                 map.entrySet().stream().forEach((entry) -> {
                     header.add("\"" + entry.getKey() + "\"");
-                    row.add("\"" + entry.getValue().toString().replace("\"", "\"\"") + "\"");
+                    row.add("\"" + entry.getValue().toString().replace("\"", "'") + "\"");
                 });
                 if (!headerDisplayed) {
                     writer.write(String.join(separator, header) + System.getProperty("line.separator"));
@@ -79,6 +79,6 @@ public class LocalFile {
     }
 
     private static String sanitizeFilename(String name) {
-        return name.replaceAll("[:\\\\/*?|<>]", "_");
+        return name.replaceAll("(?i)[^a-z0-9_]+", "_").substring(0, Math.min(name.length(), 59));
     }
 }

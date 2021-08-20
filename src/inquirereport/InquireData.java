@@ -32,21 +32,14 @@ public class InquireData {
 
             // Export all shared/published queries
             Collection<SharedQuery> sharedQueries = clientES.getSharedQueries(lds_name);
-            //TODO => Refactor into a regex
-            ArrayList<String> usageQueries = new ArrayList<>();
-            usageQueries.add("Usage_–_Transactions");
-            usageQueries.add("Usage_–_Sessions");
-            usageQueries.add("Usage_–_Standard_Usage");
-            usageQueries.add("Usage__Transactions");
-            usageQueries.add("Usage__Sessions");
-            usageQueries.add("Usage__Standard_Usage");
+
 
             HashMap<String, Iterable<Map<String, Object>>> resultsMap = new HashMap<>();
 
             for (SharedQuery publishedQuery : sharedQueries) {
                 String publishedQueryName = publishedQuery.getPublishedName();
                 Thread.sleep(1000);
-                if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !usageQueries.contains(publishedQueryName)) {
+                if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !publishedQueryName.matches("(?i)(usage_([–\\-])?_*)(transactions|interactions|sessions|standard_usage)")) {
                     results = runTqlQuery(clientES, lds_name, publishedQuery.getQuery(), dateFrom, dateTo, timeout);
                     System.out.println(results);
                     resultsMap.put(publishedQuery.getPublishedName(), results);
