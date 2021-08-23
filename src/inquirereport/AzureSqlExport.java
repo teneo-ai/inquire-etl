@@ -4,16 +4,16 @@ import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
 
 import java.io.*;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class AzureSqlExport {
     // Connect to your database.
     // Replace server name, username, and password with your credentials
-    public static void load(String serverName, String dbName, String userName, String password, String dataFolder) throws SQLException, IOException, InterruptedException {
+    public static Map<String, List<String>> load(String serverName, String dbName, String userName, String password, String dataFolder) throws SQLException, IOException, InterruptedException {
 
+        List<String> updatedTables = new ArrayList<>();
+        List<String> skippedTables = new ArrayList<>();
+        List<String> failedTables = new ArrayList<>();
 
 //Prepare data
         java.io.File dir = new java.io.File(dataFolder);
@@ -24,8 +24,22 @@ public class AzureSqlExport {
                 if (child.isFile()) {
                     String[] nameElements = child.getName().split("\\.");
                     String tableName = nameElements[0].substring(0, Math.min(nameElements[0].length(), 127));
-                    List<String[]> csvData = readData(child.getAbsolutePath());
 
+                    List<String[]> csvData = new ArrayList<>();
+                    try (BufferedReader br = new BufferedReader(new FileReader(child.getAbsolutePath()))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            String[] splitLine = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+                            for (int c = 0; c < splitLine.length; c++) {
+                                splitLine[c] = splitLine[c].replace("\"", "");
+                            }
+                            csvData.add(splitLine);
+                        }
+                    } catch (FileNotFoundException e) {
+                        failedTables.add(tableName);
+                        System.out.println(e.getMessage());
+                        continue;
+                    }
 
 
                     //Get column names and data types
@@ -77,7 +91,7 @@ public class AzureSqlExport {
                                         "BEGIN CREATE TABLE " + tableName + " (" + columnTypes + ") END";
 
                         int result = statement.executeUpdate(makeTableQuery);
-                        System.out.println(result > -1 ? "Table " + tableName + " already exists." : "Making table " + tableName +".");
+                        System.out.println(result > -1 ? "Table " + tableName + " already exists." : "Making table " + tableName + ".");
 
                         String valuesPlaceholderChain = "(" + ("?,".repeat(columnNames.length)).substring(0, (columnNames.length * 2) - 1) + ")";
 
@@ -102,34 +116,27 @@ public class AzureSqlExport {
 
 
                         int[] rowResults = preparedStatement.executeBatch();
-                        System.out.println("Done. Modified rows: " + Arrays.toString(rowResults));
 
+                        System.out.println("Done. Modified rows: " + rowResults.length);
+                        updatedTables.add(tableName);
                         preparedStatement.close();
                         connection.close();
 
                     } else {
+                        skippedTables.add(tableName);
                         System.out.println("Table: " + tableName + "was not created or updates because the source file has no data. Please check the report data and the queries on Inquire.");
                     }
                 }
 
             }
         }
+
+
+        return Map.of(
+                "updated", updatedTables,
+                "skipped", skippedTables,
+                "failed", failedTables
+        );
     }
 
-    private static List<String[]> readData(String file) throws IOException {
-        List<String[]> content = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] splitLine = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-                for (int c = 0; c < splitLine.length; c++) {
-                    splitLine[c] = splitLine[c].replace("\"", "");
-                }
-                content.add(splitLine);
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage());
-        }
-        return content;
-    }
 }

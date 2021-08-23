@@ -21,10 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 
@@ -32,9 +29,11 @@ public class GoogleSheetExport {
 
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
-    public static void load(String credentialsPath, String appName, String spreadsheetId, String dataFolder) throws IOException, GeneralSecurityException, InterruptedException {
+    public static Map<String, List<String>> load(String credentialsPath, String appName, String spreadsheetId, String dataFolder) throws IOException, GeneralSecurityException, InterruptedException {
 
-
+        List<String> updatedSheets = new ArrayList<>();
+        List<String> skippedSheets = new ArrayList<>();
+        List<String> failedSheets = new ArrayList<>();
 
         String spreadsheetRange;
         Boolean[] append = {false};
@@ -86,7 +85,7 @@ public class GoogleSheetExport {
                         requests.add(request);
                         update.setRequests(requests);
 
-                        sheetsService.spreadsheets().batchUpdate(spreadsheetId, update).execute();
+                        BatchUpdateSpreadsheetResponse batchUpdateSpreadsheetResponse = sheetsService.spreadsheets().batchUpdate(spreadsheetId, update).execute();
                     }
 
 
@@ -101,7 +100,10 @@ public class GoogleSheetExport {
 
                     try {
                         JsonArray deserialize = (JsonArray) Jsoner.deserialize(data);
-
+                        if (deserialize.size() == 0) {
+                            skippedSheets.add(spreadsheetRange);
+                            continue;
+                        }
                         boolean[] header = {false};
                         deserialize.forEach(
                                 (item) -> {
@@ -134,23 +136,28 @@ public class GoogleSheetExport {
                                 }
 
                         );
+                        ValueRange body = new ValueRange()
+                                .setValues(valuesToAdd);
+
+                        AppendValuesResponse executionResult = sheetsService.spreadsheets().values().append(spreadsheetId, spreadsheetRange, body)
+                                .setValueInputOption("USER_ENTERED")
+                                .execute();
+
+                        updatedSheets.add(spreadsheetRange);
                     } catch (JsonException e) {
-                        System.out.println(e.getMessage());
+                        failedSheets.add(spreadsheetRange);
+                        System.out.println("Error in sheet: " + spreadsheetRange + " =>" + e.getMessage());
                     }
-
-                    ValueRange body = new ValueRange()
-                            .setValues(valuesToAdd);
-
-                    sheetsService.spreadsheets().values().append(spreadsheetId, spreadsheetRange, body)
-                            .setValueInputOption("USER_ENTERED")
-                            .execute();
-
-
                 }
             }
         } else {
             //handle if dir isn't really a dir
             throw new IOException("Directory does not contain files.");
         }
+        return Map.of(
+                "updated", updatedSheets,
+                "skipped", skippedSheets,
+                "failed", failedSheets
+        );
     }
 }

@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This is the main class of this project. It allows users to create generate
@@ -29,11 +28,11 @@ public class Main {
      */
     public static void main(String[] args) throws IOException, IllegalArgumentException, SQLException, GeneralSecurityException, InterruptedException {
 
-
+try{
         HashMap<String, String> argsMap = new HashMap<>();
         List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help");
         for (String arg : args) {
-            String[] splitArg = arg.split("-{1,2}|=");
+            String[] splitArg = arg.split("-{2}|=");
 
             if (splitArg.length < 2 || !legalParams.contains(splitArg[1])) {
                 printHelp();
@@ -52,6 +51,7 @@ public class Main {
         boolean isConfigPathDir = new File(configFilesPath.toString()).isDirectory();
 
         String queryName = argsMap.getOrDefault("query", "all");
+        //TODO => Accept YYYY-MM-dd for to and from params
         String dateFrom = argsMap.getOrDefault("from", null);
         String dateTo = argsMap.getOrDefault("to", null);
         boolean exportToSheets = argsMap.containsKey("google_sheets");
@@ -79,13 +79,7 @@ public class Main {
 
 
             if (configFile.isFile()) {
-                int numberOfInquireQueries = 0;
-                int numberOfFilesWritten = 0;
-                HashSet<String> formatCount = new HashSet<>();
-                int numberOfUpdatedGoogleSheets = 0;
-                int numberOfSkippedGoogleSheets = 0;
-                int numberOfUpdatedAzureTables = 0;
-                int numberOfSkippedAzureTables = 0;
+
 
                 String fileName = configFile.getName();
                 String filePath = configFilesPath + (isConfigPathDir ? fileName : "");
@@ -196,9 +190,17 @@ public class Main {
                 separator = separator != null ? separator : "json";
                 timeout = timeout != null ? timeout : "30";
                 Thread.sleep(1000);
+
+                int numberOfInquireQueries = 0;
+                int numberOfFilesWritten = 0;
+                HashSet<String> formatCount = new HashSet<>();
+                Map<String, List<String>> googleSheetsResults = null;
+                Map<String, List<String>> azureTablesResults = null;
+                StringBuilder finalReport = new StringBuilder("\n\n\tfileName: " + fileName + "\n\n");
+
                 if (!exportOnly) {
                     HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
-                    numberOfInquireQueries = reportMap.size();
+                    numberOfInquireQueries = Objects.requireNonNull(reportMap).size();
 
                     for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
                         if (exportToSheets && !separator.equals("json")) {
@@ -207,37 +209,86 @@ public class Main {
                             LocalFile.output("json", report, outputFolderPath);
                         }
                         if (exportToSql && !separator.equals(",")) {
-                            formatCount.add(",");
+                            formatCount.add("csv");
                             numberOfFilesWritten++;
                             LocalFile.output(",", report, outputFolderPath);
                         }
-                        formatCount.add(separator);
+                        formatCount.add(separator.equals(",") ? "csv" : separator);
                         numberOfFilesWritten++;
                         LocalFile.output(separator, report, outputFolderPath);
                     }
-                }
-//TODO => Count number of successful file writes and compare to number of made queries, report on diff.
-// Then compare google loads and azure loads to number of successful files and report on diff.
-                if (exportToSheets) {
-                    GoogleSheetExport.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
-                }
-                if (exportToSql) {
-                    AzureSqlExport.load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
+                    finalReport
+                            .append("Number Of Inquire Queries: \t")
+                            .append(numberOfInquireQueries)
+                            .append("\n")
+                            .append("Number Of Files Written: \t")
+                            .append(numberOfFilesWritten)
+                            .append("\n")
+                            .append("Format count: \t")
+                            .append(formatCount.size())
+                            .append("\n")
+                            .append("Format list: \t")
+                            .append(formatCount)
+                            .append("\n\n");
                 }
 
-                System.out.println(
-                        "\tfileName: " + fileName + "\n\n" +
-                                (exportOnly ? "" : ("numberOfInquireQueries: " + numberOfInquireQueries + "\n")) +
-                                (exportOnly ? "" : ("numberOfFilesWritten: " + numberOfFilesWritten + "\n")) +
-                                (exportOnly ? "" : ("formatCount: " + formatCount.size() + "\n")) +
-                                (exportToSheets ? ("numberOfUpdatedGoogleSheets: " + numberOfUpdatedGoogleSheets + "\n"): "") +
-                                (exportToSheets ? ("numberOfSkippedGoogleSheets: " + numberOfSkippedGoogleSheets + "\n"): "") +
-                                (exportToSql ? ("numberOfUpdatedAzureTables: " + numberOfUpdatedAzureTables + "\n"): "") +
-                                (exportToSql ? ("numberOfSkippedAzureTables: " + numberOfSkippedAzureTables): "")
+                if (exportToSheets) {
+                    googleSheetsResults = GoogleSheetExport.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
+
+                    List<String> updatedList = googleSheetsResults.get("updated");
+                    List<String> skippedList = googleSheetsResults.get("skipped");
+                    List<String> failedList = googleSheetsResults.get("failed");
+
+                    finalReport.append("Updated Google Sheets: \t")
+                            .append(updatedList.size())
+                            .append("\t")
+                            .append(updatedList)
+                            .append("\n")
+                            .append("Skipped Google Sheets: \t")
+                            .append(skippedList.size())
+                            .append("\t")
+                            .append(skippedList)
+                            .append("\n")
+                            .append("Failed Google Sheets: \t")
+                            .append(failedList.size())
+                            .append("\t")
+                            .append(failedList)
+                            .append("\n");
+                }
+                if (exportToSql) {
+                    azureTablesResults = AzureSqlExport.load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
+                    List<String> updatedList = azureTablesResults.get("updated");
+                    List<String> skippedList = azureTablesResults.get("skipped");
+                    List<String> failedList = azureTablesResults.get("failed");
+
+                    finalReport.append("Updated Azure SQL Tables: \t")
+                            .append(updatedList.size())
+                            .append("\t")
+                            .append(updatedList)
+                            .append("\n")
+                            .append("Skipped Azure SQL Tables: \t")
+                            .append(skippedList.size())
+                            .append("\t")
+                            .append(skippedList)
+                            .append("\n")
+                            .append("Failed Azure SQL Tables: \t")
+                            .append(failedList.size())
+                            .append("\t")
+                            .append(failedList)
+                            .append("\n");
+                }
+
+                System.out.println(finalReport
+
+
                 );
             }
         }
     }
+catch (Exception e){
+    printHelp();
+    System.out.println("General Exception: " + e.getMessage());
+}}
 
     private static void printHelp() {
         System.out.println(
