@@ -26,12 +26,11 @@ public class AzureSqlExport {
                     String tableName = nameElements[0].substring(0, Math.min(nameElements[0].length(), 127));
                     List<String[]> csvData = readData(child.getAbsolutePath());
 
-                    System.out.println("table name: " + tableName);
+
 
                     //Get column names and data types
                     StringBuilder columnTypes = new StringBuilder();
                     String[] columnNames = csvData.size() > 0 ? csvData.get(0) : new String[0];
-                    System.out.println("column names: " + Arrays.toString(columnNames));
 
 
                     //Create JDBC connection and statement
@@ -45,7 +44,7 @@ public class AzureSqlExport {
                                     "hostNameInCertificate=*.database.windows.net;" +
                                     "loginTimeout=30;";
                     Connection connection = DriverManager.getConnection(connectionUrl);
-
+                    Statement statement = connection.createStatement();
 
                     for (int i = 0; i < columnNames.length; i++) {
                         String type;
@@ -66,10 +65,10 @@ public class AzureSqlExport {
                         }
 
 
-                        columnNames[i] = (columnNames[i].substring(0, Math.min(columnNames[i].length(), 25)));
+                        columnNames[i] = statement.enquoteIdentifier(columnNames[i].substring(0, Math.min(columnNames[i].length(), 25)), true);
                         columnTypes.append(columnNames[i]).append(" ").append(type);
                     }
-                    System.out.println("column types: " + columnTypes);
+
 
                     if (csvData.size() > 0) {
                         //Create table if it doesn't exist
@@ -77,15 +76,14 @@ public class AzureSqlExport {
                                 "IF (NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '" + tableName + "'))\n" +
                                         "BEGIN CREATE TABLE " + tableName + " (" + columnTypes + ") END";
 
-                        SQLServerPreparedStatement preparedStatement = (SQLServerPreparedStatement) connection.prepareStatement(makeTableQuery);
-                        int result = preparedStatement.executeUpdate();
+                        int result = statement.executeUpdate(makeTableQuery);
                         System.out.println(result > -1 ? "Table " + tableName + " already exists." : "Making table " + tableName +".");
 
                         String valuesPlaceholderChain = "(" + ("?,".repeat(columnNames.length)).substring(0, (columnNames.length * 2) - 1) + ")";
 
                         String insertDataQuery = "INSERT INTO " + tableName + "(" + String.join(",", columnNames) + ") VALUES " + valuesPlaceholderChain;
                         //Get Row data
-                        preparedStatement = (SQLServerPreparedStatement) connection.prepareStatement(insertDataQuery);
+                        SQLServerPreparedStatement preparedStatement = (SQLServerPreparedStatement) connection.prepareStatement(insertDataQuery);
 
                         for (int j = 1; j < csvData.size(); j++) {
                             String[] rowData = csvData.get(j);

@@ -32,15 +32,8 @@ public class GoogleSheetExport {
 
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
-//TODO => Create rollback capability if things go wrong
     public static void load(String credentialsPath, String appName, String spreadsheetId, String dataFolder) throws IOException, GeneralSecurityException, InterruptedException {
 
-        /* Needed Params
-         * Credentials File
-         * App Name
-         * spreadsheetId
-         * data to be added
-         */
 
 
         String spreadsheetRange;
@@ -69,14 +62,12 @@ public class GoogleSheetExport {
                 if (child.isFile()) {
                     String[] nameElements = child.getName().split("\\.");
                     spreadsheetRange = nameElements[0].substring(0, Math.min(nameElements[0].length(), 99));
-                    System.out.println(spreadsheetRange);
 
                     try {
                         ValueRange checkSheet = sheetsService.spreadsheets().values()
                                 .get(spreadsheetId, spreadsheetRange)
                                 .execute();
                         if (checkSheet != null) {
-                            // System.out.println(checkSheet);
                             System.out.println("Sheet: " + spreadsheetRange + " exists");
                             append[0] = true;
                         }
@@ -110,19 +101,18 @@ public class GoogleSheetExport {
 
                     try {
                         JsonArray deserialize = (JsonArray) Jsoner.deserialize(data);
-                        System.out.println(deserialize);
+
                         boolean[] header = {false};
                         deserialize.forEach(
                                 (item) -> {
 
                                     List<Object> row = new ArrayList<>();
                                     JsonObject record = (JsonObject) item;
-                                    System.out.println(record);
+
                                     if (!header[0]) {
                                         if (!append[0]) {
                                             valuesToAdd.add(Arrays.asList(record.keySet().toArray()));
                                         }
-                                        System.out.println(record.keySet());
                                         header[0] = true;
                                     }
                                     record.forEach(
@@ -139,13 +129,11 @@ public class GoogleSheetExport {
 
                                             });
                                     valuesToAdd.add(row);
-                                      System.out.println(row);
 
 
                                 }
 
                         );
-                        // System.out.println(valuesToAdd);
                     } catch (JsonException e) {
                         System.out.println(e.getMessage());
                     }
@@ -153,15 +141,9 @@ public class GoogleSheetExport {
                     ValueRange body = new ValueRange()
                             .setValues(valuesToAdd);
 
-                    //   AppendValuesResponse appendResult =
                     sheetsService.spreadsheets().values().append(spreadsheetId, spreadsheetRange, body)
                             .setValueInputOption("USER_ENTERED")
                             .execute();
-                    //  System.out.println(appendResult);
-
-
-                    //System.out.printf("%d cells updated.", result.getUpdatedCells());
-                    // } //end of catch
 
 
                 }

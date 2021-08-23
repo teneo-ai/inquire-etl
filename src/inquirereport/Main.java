@@ -29,14 +29,15 @@ public class Main {
      */
     public static void main(String[] args) throws IOException, IllegalArgumentException, SQLException, GeneralSecurityException, InterruptedException {
 
+
         HashMap<String, String> argsMap = new HashMap<>();
-        List<String> legalParams = Arrays.asList("config","google_sheets", "azure_sql", "export_only", "query", "from", "to", "help");
+        List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help");
         for (String arg : args) {
             String[] splitArg = arg.split("-{1,2}|=");
 
-            if(splitArg.length < 2 || !legalParams.contains(splitArg[1])){
+            if (splitArg.length < 2 || !legalParams.contains(splitArg[1])) {
                 printHelp();
-                throw new IllegalArgumentException("illegal argument received: " + String.join("",splitArg));
+                throw new IllegalArgumentException("illegal argument received: " + String.join("", splitArg));
             }
             argsMap.put(splitArg[1], (splitArg.length > 2 ? splitArg[2] : ""));
         }
@@ -57,9 +58,9 @@ public class Main {
         boolean exportToSql = argsMap.containsKey("azure_sql");
         boolean exportOnly = argsMap.containsKey("export_only");
 
-if(exportOnly && !exportToSheets && !exportToSql){
-    throw new IllegalArgumentException("--export_only command received but neither --azure_sql nor --google_sheets were specified");
-}
+        if (exportOnly && !exportToSheets && !exportToSql) {
+            throw new IllegalArgumentException("--export_only command received but neither --azure_sql nor --google_sheets were specified");
+        }
 
         File[] configFiles;
         if (isConfigPathDir) {
@@ -75,7 +76,17 @@ if(exportOnly && !exportToSheets && !exportToSql){
             throw new IOException("No properties files found in supplied directory.");
         }
         for (File configFile : configFiles) {
+
+
             if (configFile.isFile()) {
+                int numberOfInquireQueries = 0;
+                int numberOfFilesWritten = 0;
+                HashSet<String> formatCount = new HashSet<>();
+                int numberOfUpdatedGoogleSheets = 0;
+                int numberOfSkippedGoogleSheets = 0;
+                int numberOfUpdatedAzureTables = 0;
+                int numberOfSkippedAzureTables = 0;
+
                 String fileName = configFile.getName();
                 String filePath = configFilesPath + (isConfigPathDir ? fileName : "");
                 System.out.println("Currently processing " + filePath);
@@ -187,15 +198,21 @@ if(exportOnly && !exportToSheets && !exportToSql){
                 Thread.sleep(1000);
                 if (!exportOnly) {
                     HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
-                    System.out.println(Objects.requireNonNull(reportMap).entrySet());
+                    numberOfInquireQueries = reportMap.size();
 
                     for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
                         if (exportToSheets && !separator.equals("json")) {
+                            formatCount.add("json");
+                            numberOfFilesWritten++;
                             LocalFile.output("json", report, outputFolderPath);
                         }
                         if (exportToSql && !separator.equals(",")) {
+                            formatCount.add(",");
+                            numberOfFilesWritten++;
                             LocalFile.output(",", report, outputFolderPath);
                         }
+                        formatCount.add(separator);
+                        numberOfFilesWritten++;
                         LocalFile.output(separator, report, outputFolderPath);
                     }
                 }
@@ -207,6 +224,17 @@ if(exportOnly && !exportToSheets && !exportToSql){
                 if (exportToSql) {
                     AzureSqlExport.load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
                 }
+
+                System.out.println(
+                        "\tfileName: " + fileName + "\n\n" +
+                                (exportOnly ? "" : ("numberOfInquireQueries: " + numberOfInquireQueries + "\n")) +
+                                (exportOnly ? "" : ("numberOfFilesWritten: " + numberOfFilesWritten + "\n")) +
+                                (exportOnly ? "" : ("formatCount: " + formatCount.size() + "\n")) +
+                                (exportToSheets ? ("numberOfUpdatedGoogleSheets: " + numberOfUpdatedGoogleSheets + "\n"): "") +
+                                (exportToSheets ? ("numberOfSkippedGoogleSheets: " + numberOfSkippedGoogleSheets + "\n"): "") +
+                                (exportToSql ? ("numberOfUpdatedAzureTables: " + numberOfUpdatedAzureTables + "\n"): "") +
+                                (exportToSql ? ("numberOfSkippedAzureTables: " + numberOfSkippedAzureTables): "")
+                );
             }
         }
     }

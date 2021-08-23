@@ -41,7 +41,6 @@ public class InquireData {
                 Thread.sleep(1000);
                 if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !publishedQueryName.matches("(?i)(usage_([–\\-])?_*)(transactions|interactions|sessions|standard_usage)")) {
                     results = runTqlQuery(clientES, lds_name, publishedQuery.getQuery(), dateFrom, dateTo, timeout);
-                    System.out.println(results);
                     resultsMap.put(publishedQuery.getPublishedName(), results);
                 }
             }
