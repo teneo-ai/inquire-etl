@@ -142,6 +142,7 @@ public class GoogleSheetExport {
                         AppendValuesResponse executionResult = sheetsService.spreadsheets().values().append(spreadsheetId, spreadsheetRange, body)
                                 .setValueInputOption("USER_ENTERED")
                                 .execute();
+                        System.out.println("Finished updating sheet: " + spreadsheetRange + ".");
 
                         updatedSheets.add(spreadsheetRange);
                     } catch (JsonException e) {

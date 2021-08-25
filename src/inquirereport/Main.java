@@ -38,6 +38,7 @@ public class Main {
                     printHelp();
                     throw new IllegalArgumentException("illegal argument received: " + String.join("", splitArg));
                 }
+
                 argsMap.put(splitArg[1], (splitArg.length > 2 ? splitArg[2] : ""));
             }
 
@@ -46,12 +47,16 @@ public class Main {
                 System.exit(0);
             }
 
+            if((argsMap.containsKey("from") && !argsMap.containsKey("to"))||(!argsMap.containsKey("from") && argsMap.containsKey("to"))){
+                printHelp();
+                throw new IllegalArgumentException("--from and --to are both mandatory if either is used.");
+            }
+
 
             StringBuilder configFilesPath = new StringBuilder(argsMap.getOrDefault("config", new File(".").getCanonicalPath()));
             boolean isConfigPathDir = new File(configFilesPath.toString()).isDirectory();
 
             String queryName = argsMap.getOrDefault("query", "all");
-            //TODO => Accept YYYY-MM-dd for to and from params
             String dateFrom = argsMap.getOrDefault("from", null);
             String dateTo = argsMap.getOrDefault("to", null);
             boolean exportToSheets = argsMap.containsKey("google_sheets");
@@ -196,7 +201,7 @@ public class Main {
                     HashSet<String> formatCount = new HashSet<>();
                     Map<String, List<String>> googleSheetsResults = null;
                     Map<String, List<String>> azureTablesResults = null;
-                    StringBuilder finalReport = new StringBuilder("\n\n\tfileName: " + fileName + "\n\n");
+                    StringBuilder finalReport = new StringBuilder("\n\n\t**************Execution Report**************\n\nFile Name: \t\t\t\t\t" + fileName + "\n");
 
                     if (!exportOnly) {
                         HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
@@ -224,10 +229,10 @@ public class Main {
                                 .append("Number Of Files Written: \t")
                                 .append(numberOfFilesWritten)
                                 .append("\n")
-                                .append("Format count: \t")
+                                .append("Format count: \t\t\t\t")
                                 .append(formatCount.size())
                                 .append("\n")
-                                .append("Format list: \t")
+                                .append("Format list: \t\t\t\t")
                                 .append(formatCount)
                                 .append("\n\n");
                     }
@@ -239,17 +244,17 @@ public class Main {
                         List<String> skippedList = googleSheetsResults.get("skipped");
                         List<String> failedList = googleSheetsResults.get("failed");
 
-                        finalReport.append("Updated Google Sheets: \t")
+                        finalReport.append("Updated Google Sheets: \t\t")
                                 .append(updatedList.size())
                                 .append("\t")
                                 .append(updatedList)
                                 .append("\n")
-                                .append("Skipped Google Sheets: \t")
+                                .append("Skipped Google Sheets: \t\t")
                                 .append(skippedList.size())
                                 .append("\t")
                                 .append(skippedList)
                                 .append("\n")
-                                .append("Failed Google Sheets: \t")
+                                .append("Failed Google Sheets: \t\t")
                                 .append(failedList.size())
                                 .append("\t")
                                 .append(failedList)
@@ -286,7 +291,7 @@ public class Main {
             }
         } catch (Exception e) {
             printHelp();
-            System.out.println("General Exception: " + e.getMessage());
+            System.out.println("Error: " + e.getClass() + " -----  " + e.getMessage());
         }
     }
 

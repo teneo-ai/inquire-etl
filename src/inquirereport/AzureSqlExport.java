@@ -117,7 +117,7 @@ public class AzureSqlExport {
 
                         int[] rowResults = preparedStatement.executeBatch();
 
-                        System.out.println("Done. Modified rows: " + rowResults.length);
+                        System.out.println("Done updating table. " + tableName + ". Modified rows: " + rowResults.length);
                         updatedTables.add(tableName);
                         preparedStatement.close();
                         connection.close();

@@ -40,7 +40,7 @@ public class InquireData {
                 String publishedQueryName = publishedQuery.getPublishedName();
                 Thread.sleep(1000);
                 if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !publishedQueryName.matches("(?i)(usage_([–\\-])?_*)(transactions|interactions|sessions|standard_usage)")) {
-                    results = runTqlQuery(clientES, lds_name, publishedQuery.getQuery(), dateFrom, dateTo, timeout);
+                    results = runTqlQuery(clientES, lds_name, publishedQuery.getQuery(), dateFrom, dateTo, timeout, publishedQueryName);
                     resultsMap.put(publishedQuery.getPublishedName(), results);
                 }
             }
@@ -57,7 +57,8 @@ public class InquireData {
         return null;
     }
 
-    public static Iterable<Map<String, Object>> runTqlQuery(QueryClient clientES, String lds_name, String qry, String from, String to, String timeout) throws Exception {
+    public static Iterable<Map<String, Object>> runTqlQuery(QueryClient clientES, String lds_name, String qry, String from, String to, String timeout, String qryName) throws Exception {
+
 
         Iterable<Map<String, Object>> results;
 
@@ -71,21 +72,23 @@ public class InquireData {
         String dateFromUtc;
         String dateToUtc;
 
-        DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH);
+        DateFormat format = null;
         if (from != null) {
+            format = new SimpleDateFormat((from.length() == 10 ? "yyyy-MM-dd" : "yyyy-MM-dd'T'HH:mm:ss'Z'"), Locale.ENGLISH);
             dateFromUtc = Long.toString(format.parse(from).getTime());
             params.put("from", dateFromUtc);
         }
 
         if (to != null) {
-            dateToUtc = Long.toString(format.parse(to).getTime());
+            dateToUtc = Long.toString(Objects.requireNonNull(format).parse(to).getTime());
             params.put("to", dateToUtc);
         }
 
-        params.put("timeout",timeout);
+        params.put("timeout", timeout);
 
+        System.out.println("Running query: " + qryName + "\nWith params: " + params);
         results = clientES.executeQuery(lds_name, qry, params);
-
+        System.out.println("Query " + qryName + " finished\n");
         return results;
 
     }
