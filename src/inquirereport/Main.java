@@ -23,18 +23,21 @@ public class Main {
      *             --azure_sql: Optional: Loads the data into Azure SQL.
      *             --config  : Optional. configuration file or directory e.g. etc/ or test_config.properties. If a directory is selected the application will iterate over all *_config.properties files found in the directory.Defaults to application root."
      *             --query : Optional. name of published query required. This is not case-sensitive. Defaults to the value 'all' which produces all published queries in the LDS.\n"
-     *             --from : Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
-     *             --to : Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
+     *             --from : Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
+     *             --to : Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
      */
     public static void main(String[] args) throws IOException, IllegalArgumentException, SQLException, GeneralSecurityException, InterruptedException {
 
         try {
             HashMap<String, String> argsMap = new HashMap<>();
+            //Define which parameters are acceptable
             List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help");
             for (String arg : args) {
+                //Parse the parameters from the command line
                 String[] splitArg = arg.split("-{2}|=");
 
                 if (splitArg.length < 2 || !legalParams.contains(splitArg[1])) {
+                    //Throw an error if an illegal command is given
                     printHelp();
                     throw new IllegalArgumentException("illegal argument received: " + String.join("", splitArg));
                 }
@@ -43,19 +46,23 @@ public class Main {
             }
 
             if (argsMap.containsKey("help")) {
+                //Print out the help text if --help is used, ignores all other flags.
                 printHelp();
                 System.exit(0);
             }
 
             if((argsMap.containsKey("from") && !argsMap.containsKey("to"))||(!argsMap.containsKey("from") && argsMap.containsKey("to"))){
+                //Checks that from and to are either paired or non-existent
                 printHelp();
                 throw new IllegalArgumentException("--from and --to are both mandatory if either is used.");
             }
 
-
+            //Set the path to the config files or default to application root.
             StringBuilder configFilesPath = new StringBuilder(argsMap.getOrDefault("config", new File(".").getCanonicalPath()));
+            //Determine if the path given is a directory (and all the *_config.properties files in it will be used) or a specific properties file.
             boolean isConfigPathDir = new File(configFilesPath.toString()).isDirectory();
 
+            //Extract parameters into variables
             String queryName = argsMap.getOrDefault("query", "all");
             String dateFrom = argsMap.getOrDefault("from", null);
             String dateTo = argsMap.getOrDefault("to", null);
@@ -63,61 +70,72 @@ public class Main {
             boolean exportToSql = argsMap.containsKey("azure_sql");
             boolean exportOnly = argsMap.containsKey("export_only");
 
+
+            // This block checks whether an export option was given with --export_only
             if (exportOnly && !exportToSheets && !exportToSql) {
                 throw new IllegalArgumentException("--export_only command received but neither --azure_sql nor --google_sheets were specified");
             }
 
             File[] configFiles;
             if (isConfigPathDir) {
+                //Loads all properties files into File Array
                 configFilesPath.append(configFilesPath.charAt(configFilesPath.length() - 1) == '/' ? "" : "/");
                 configFiles = new File(configFilesPath.toString()).listFiles((dir, name) -> name.endsWith(".properties"));
             } else {
+                //Loads a single properties file into a File Array as a lone entry
                 configFiles = new File[1];
                 configFiles[0] = new File(configFilesPath.toString());
             }
 
             if (configFiles == null || configFiles.length == 0) {
+                //Throws an exception if no property files found on path.
                 printHelp();
                 throw new IOException("No properties files found in supplied directory.");
             }
+
+            //Iterate over each of the config files to query Inquire, produce reports and export as per options
             for (File configFile : configFiles) {
 
 
                 if (configFile.isFile()) {
 
-
+                    // Extract file name and canonical path
                     String fileName = configFile.getName();
                     String filePath = configFilesPath + (isConfigPathDir ? fileName : "");
                     System.out.println("Currently processing " + filePath);
 
-                    InputStream input = new FileInputStream(filePath); // Access to properties file containing Inquire backend, user and password
+                    // Access to properties file containing Inquire backend, user and password
+                    InputStream input = new FileInputStream(filePath);
 
 
-                    // Read properties file
+                    // Read properties file and close it
                     Properties prop = new Properties();
                     prop.load(input);
+                    input.close();
 
 
                     // Check all required properties are found
+                    // Mandatory
                     String backend_URL = prop.getProperty("inquireBackend");
                     String lds_name = prop.getProperty("lds");
                     String username = prop.getProperty("inquireUser");
                     String password = prop.getProperty("inquirePassword");
-
+                    //Optional
                     String separator = prop.getProperty("separator");
                     String timeout = prop.getProperty("timeout");
 
-
+                    //Will create output folder path from config or default to system Temp folder
                     String outputFolderPath = (String) prop.getOrDefault("outputDir", System.getProperty("java.io.tmpdir") + "/inquire_exporter/");
                     outputFolderPath += (outputFolderPath.charAt(outputFolderPath.length() - 1) == '/' ? "" : "/") + (fileName.split("_config")[0] + "/");
 
 
                     System.out.println("Output file path: " + outputFolderPath);
 
+                    //Mandatory for --google_sheets
                     String googleCredentialsPath = prop.getProperty("googleCredentialsPath");
                     String googleCloudAppName = prop.getProperty("googleCloudAppName");
                     String googleSheetId = prop.getProperty("googleSheetId");
-
+                    //Mandatory for Azure
                     String azureServerName = prop.getProperty("azureServerName");
                     String azureDatabaseName = prop.getProperty("azureDatabaseName");
                     String azureUser = prop.getProperty("azureUser");
@@ -194,34 +212,49 @@ public class Main {
                     //Apply defaults for export type
                     separator = separator != null ? separator : "json";
                     timeout = timeout != null ? timeout : "30";
+                    //This delays the writing of each query to avoid overwhelming the system
                     Thread.sleep(1000);
 
+                    //These values are to initialize reporting variables
                     int numberOfInquireQueries = 0;
                     int numberOfFilesWritten = 0;
                     HashSet<String> formatCount = new HashSet<>();
                     Map<String, List<String>> googleSheetsResults = null;
                     Map<String, List<String>> azureTablesResults = null;
-                    StringBuilder finalReport = new StringBuilder("\n\n\t**************Execution Report**************\n\nFile Name: \t\t\t\t\t" + fileName + "\n");
+                    StringBuilder finalReport = new StringBuilder(2048)
+                            .append("\n\n\t**************Execution Report**************\n\nFile Name: \t\t\t\t\t")
+                            .append(fileName)
+                            .append("\n");
 
+
+                    // This block will only execute if new reports are needed, otherwise it will use the current reports in the output directory
                     if (!exportOnly) {
+                        //This is the entry point for the Inquire Data class, returns a serialized Map with the data of all shared queries (or requested one) in the LDS.
                         HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
+                        //Update number of run queries for report
                         numberOfInquireQueries = Objects.requireNonNull(reportMap).size();
 
+                        //Iterate over the result of each query to create a report file
                         for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
+                            //Create json file if requested separator is not json and Google Sheet export is requested
                             if (exportToSheets && !separator.equals("json")) {
                                 formatCount.add("json");
                                 numberOfFilesWritten++;
                                 LocalFile.output("json", report, outputFolderPath);
                             }
+                            //Create CSV file if requested separator is not "," and Azure SQL export is requested.
+                            //TODO => Allow for string csv to be used in config in place of ","
                             if (exportToSql && !separator.equals(",")) {
                                 formatCount.add("csv");
                                 numberOfFilesWritten++;
                                 LocalFile.output(",", report, outputFolderPath);
                             }
+                            //Create report file with separator if it wasn't created for the export options above.
                             formatCount.add(separator.equals(",") ? "csv" : separator);
                             numberOfFilesWritten++;
                             LocalFile.output(separator, report, outputFolderPath);
                         }
+                        //Append report strings with Inquire and file writter results
                         finalReport
                                 .append("Number Of Inquire Queries: \t")
                                 .append(numberOfInquireQueries)
@@ -237,13 +270,17 @@ public class Main {
                                 .append("\n\n");
                     }
 
+                    //This block handles export to Google Sheets
                     if (exportToSheets) {
+                        //Entry point to Google Sheets exporter class, returns a map with three lists, for updated, skipped and failed operations respectively.
+
                         googleSheetsResults = GoogleSheetExport.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
 
                         List<String> updatedList = googleSheetsResults.get("updated");
                         List<String> skippedList = googleSheetsResults.get("skipped");
                         List<String> failedList = googleSheetsResults.get("failed");
 
+                        //Append Google Sheets export results to final report
                         finalReport.append("Updated Google Sheets: \t\t")
                                 .append(updatedList.size())
                                 .append("\t")
@@ -260,7 +297,10 @@ public class Main {
                                 .append(failedList)
                                 .append("\n");
                     }
+
+                    //This block controls export to Azure SQL
                     if (exportToSql) {
+                        //Entry point for Azure SQL exporter class, returns a map on lists with the updated, skipped and failed tables.
                         azureTablesResults = AzureSqlExport.load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
                         List<String> updatedList = azureTablesResults.get("updated");
                         List<String> skippedList = azureTablesResults.get("skipped");
@@ -283,18 +323,18 @@ public class Main {
                                 .append("\n");
                     }
 
-                    System.out.println(finalReport
-
-
-                    );
+                    System.out.println(finalReport);
+                } else{
+                    throw new IOException("Path provided does not contain a valid properties file");
                 }
             }
         } catch (Exception e) {
+            //Catch all exception
             printHelp();
-            System.out.println("Error: " + e.getClass() + " -----  " + e.getMessage());
+            System.out.println("Error: " + e.getClass() + " ----- " + e.getMessage());
         }
     }
-
+        //This method is called on all exceptions to print help to user.
     private static void printHelp() {
         System.out.println(
                 "Usage: java -jar \"Inquire_Extract.jar\" [--config=<config> --google_sheets --azure_sql --export_only --query=<query> --from=<from_date> --to=<to_date> --help]\n" +

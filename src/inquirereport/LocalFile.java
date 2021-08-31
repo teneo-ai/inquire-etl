@@ -9,19 +9,32 @@ import java.util.List;
 import java.util.Map;
 
 public class LocalFile {
+
+    /**
+     *
+     * @param separator The character that will be used to separate the data points.
+     *                  If "json" is received it will generate a JSON file.
+     *                  If "," is received, a CSV file is created.
+     *                  Else a *.txt file is created.
+     * @param results The contents of the query response from Inquire.
+     * @param path The folder where the files will be created.
+     *             The method recursively create directories within the output directory with the name of the configuration file.
+     *             For example, a file called carwash_config.properties will result in /outputDir/carwash/queryname.extension
+     */
+
     static void output(String separator, Map.Entry<String, Iterable<Map<String, Object>>> results, String path) {
 
         //replace bad chars in filename
         String fileName = sanitizeFilename(results.getKey());
 
-        // create the output folder if it does not exist
+        // create the output folder if it does not exist.
         File directory = new File(String.valueOf(path));
         if (!directory.exists()) {
             boolean mkdirsSuccess = directory.mkdirs();
             System.out.println((mkdirsSuccess ? "Success making " : "Failed to make ") + " directory: " + directory.getPath());
-
         }
 
+        //This will assign the extension to the file according to the extension
         String outputFileName = fileName;
         if (separator.equalsIgnoreCase("json")) {
             outputFileName = path.concat(outputFileName).concat(".json");
