@@ -1,11 +1,9 @@
-package inquirereport;
+package main;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -26,9 +24,10 @@ public class Main {
      *             --from : Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
      *             --to : Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
      */
-    public static void main(String[] args) throws IOException, IllegalArgumentException, SQLException, GeneralSecurityException, InterruptedException {
+    public static void main(String[] args) throws IllegalArgumentException {
 
         try {
+            System.setProperty("org.owasp.esapi.logSpecial.discard", "true");
             HashMap<String, String> argsMap = new HashMap<>();
             //Define which parameters are acceptable
             List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help");
@@ -51,7 +50,7 @@ public class Main {
                 System.exit(0);
             }
 
-            if((argsMap.containsKey("from") && !argsMap.containsKey("to"))||(!argsMap.containsKey("from") && argsMap.containsKey("to"))){
+            if ((argsMap.containsKey("from") && !argsMap.containsKey("to")) || (!argsMap.containsKey("from") && argsMap.containsKey("to"))) {
                 //Checks that from and to are either paired or non-existent
                 printHelp();
                 throw new IllegalArgumentException("--from and --to are both mandatory if either is used.");
@@ -301,7 +300,7 @@ public class Main {
                     //This block controls export to Azure SQL
                     if (exportToSql) {
                         //Entry point for Azure SQL exporter class, returns a map on lists with the updated, skipped and failed tables.
-                        azureTablesResults = AzureSqlExport.load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
+                        azureTablesResults = new AzureSqlExport().load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
                         List<String> updatedList = azureTablesResults.get("updated");
                         List<String> skippedList = azureTablesResults.get("skipped");
                         List<String> failedList = azureTablesResults.get("failed");
@@ -324,7 +323,7 @@ public class Main {
                     }
 
                     System.out.println(finalReport);
-                } else{
+                } else {
                     throw new IOException("Path provided does not contain a valid properties file");
                 }
             }
@@ -334,10 +333,12 @@ public class Main {
             System.out.println("Error: " + e.getClass() + " ----- " + e.getMessage());
         }
     }
-        //This method is called on all exceptions to print help to user.
+
+    //This method is called on all exceptions to print help to user.
     private static void printHelp() {
         System.out.println(
-                "Usage: java -jar \"Inquire_Extract.jar\" [--config=<config> --google_sheets --azure_sql --export_only --query=<query> --from=<from_date> --to=<to_date> --help]\n" +
+                "\n\n*********************************************************************" +
+                        "\nUsage: java -jar \"Inquire_Extract.jar\" [--config=<config> --google_sheets --azure_sql --export_only --query=<query> --from=<from_date> --to=<to_date> --help]\n" +
                         "Parameters:\n"
                         + "- config: Optional. \n" +
                         "\tConfiguration file or directory e.g. etc/ or test_config.properties.\n" +
@@ -387,7 +388,8 @@ public class Main {
                         "- separator: Optional.\n" +
                         "\tSeparator used between fields in the output files. Defaults to 'json'.\n" +
                         "- timeout: Optional.\n" +
-                        "\tTimeout for queries. Defaults to 30 seconds."
+                        "\tTimeout for queries. Defaults to 30 seconds." +
+                        "\n*********************************************************************"
 
         );
     }

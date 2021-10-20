@@ -1,7 +1,8 @@
 /.idea/
 /bu/
 /target/
-/CircleKDashboardQueries.iml
 /reports/
 /etc/credentials.json
 /configs/
+/etc/kay_dk_config.properties
+/etc/test_config.properties

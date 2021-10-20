@@ -3,12 +3,11 @@
  * IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY, COMPLETENESS OR PERFORMANCE.
  *
  */
-package inquirereport;
+package main;
 
 import com.artisol.teneo.inquire.api.models.SharedQuery;
 import com.artisol.teneo.inquire.client.QueryClient;
 
-import javax.annotation.RegEx;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.text.DateFormat;
@@ -87,7 +86,7 @@ public class InquireData {
      * @param timeout - Seconds before giving up on connection
      * @param qryName - Name of the shared query
      * @return map with query result values
-     * @throws Exception
+     * @throws Exception Something went wrong
      */
          public static Iterable<Map<String, Object>> runTqlQuery(QueryClient clientES, String lds_name, String qry, String from, String to, String timeout, String qryName) throws Exception {
 
