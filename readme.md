@@ -2,10 +2,14 @@
 This tool will run Shared Queries from and Inquire Log Data Source and create files locally with the data. These files can be in json or csv format or have arbitrary separator in a text file. The tool can also export the results of the Queries to Google Sheets or Azure SQL.
 This is an automation tool, it is not meant for extended manual use. The intended functionality is for the compiled .jar file to be run periodically by a Cron job in order to update a data source.
 
-# Usage:
+# Build
+Use Maven command:
+
+`mvn clean compile assembly:single`
+# Usage
 java -jar "Inquire_Extract.jar" [--config=<config> --google_sheets --azure_sql --export_only --query=<query> --from=<from_date> --to=<to_date> --help]
 
-# Parameters:
+# Parameters
 - **config**: Optional.
   Configuration file or directory e.g. etc/ or test_config.properties.
   If a directory is selected the application will iterate over all *_config.properties files found in the directory.
@@ -28,7 +32,9 @@ java -jar "Inquire_Extract.jar" [--config=<config> --google_sheets --azure_sql -
 - **help**: Optional.
   Show this message.
 
-# Configurations: Create a *_config.properties file with the following entries =>
+# Configurations
+
+Create a *_config.properties file with the following entries =>
 
 - **inquireBackend**: Mandatory.
   The URL to the Teneo Inquire backend
