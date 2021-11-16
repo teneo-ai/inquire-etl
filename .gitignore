@@ -1,8 +1,10 @@
 /.idea/
 /bu/
 /target/
+!/target/inquire_etl-1.0.0-jar-with-dependencies.jar
 /reports/
 /etc/credentials.json
 /configs/
 /etc/kay_dk_config.properties
 /etc/test_config.properties
+/inquire_etl.iml

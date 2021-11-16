@@ -353,10 +353,10 @@ public class Main {
                         + "- query: Optional.\n" +
                         "\tName of published query to fetch. This is not case-sensitive.\n" +
                         "\tDefaults to the value 'all' which produces all published queries in the LDS.\n"
-                        + "- from_date: Optional.\n" +
+                        + "- from: Optional.\n" +
                         "\tDate for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z.\n" +
                         "\tMust be have a to_date if used.\n"
-                        + "- to_date: Optional.\n" +
+                        + "- to: Optional.\n" +
                         "\tDate for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z.\n" +
                         "\tMust have a from_date if used.\n"
                         + "- help: Optional.\n" +
