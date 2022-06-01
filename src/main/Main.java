@@ -24,7 +24,7 @@ public class Main {
      *             --from : Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
      *             --to : Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
      */
-    public static void main(String[] args) throws IllegalArgumentException {
+    public static void main(String[] args) throws Exception {
 
         try {
             System.setProperty("org.owasp.esapi.logSpecial.discard", "true");
@@ -331,6 +331,7 @@ public class Main {
             //Catch all exception
             printHelp();
             System.out.println("Error: " + e.getClass() + " ----- " + e.getMessage());
+            e.printStackTrace(System.out);
         }
     }
 
