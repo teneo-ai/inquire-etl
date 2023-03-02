@@ -127,8 +127,8 @@ public class Main {
                     String outputFolderPath = (String) prop.getOrDefault("outputDir", System.getProperty("java.io.tmpdir") + "/inquire_exporter/");
                     outputFolderPath += (outputFolderPath.charAt(outputFolderPath.length() - 1) == '/' ? "" : "/") + (fileName.split("_config")[0] + "/");
 
-
                     System.out.println("Output file path: " + outputFolderPath);
+                    emptyFolder(new File(outputFolderPath));
 
                     //Mandatory for --google_sheets
                     String googleCredentialsPath = prop.getProperty("googleCredentialsPath");
@@ -393,5 +393,16 @@ public class Main {
                         "\n*********************************************************************"
 
         );
+    }
+
+
+    private static void emptyFolder(final File folder) {
+        final File[] files = folder.listFiles();
+        if (files != null) {
+            for (final File f : files) {
+                emptyFolder(f);
+                f.delete();
+            }
+        }
     }
 }
