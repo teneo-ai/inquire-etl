@@ -109,8 +109,6 @@ public class InquireData {
      * @throws Exception Something went wrong
      */
     public static Iterable<Map<String, Object>> runTqlQuery(TeneoInquireClient clientES, String lds_name, String qry, String from, String to, String timeout, String qryName) throws Exception {
-
-        Iterable<Map<String, Object>> results;
         /*
         System.setErr(new PrintStream(new OutputStream() {
             public void write(int b) {
@@ -136,11 +134,11 @@ public class InquireData {
         
         // results = clientES.executeQuery(lds_name, qry, params);
         
-        TqlResourceImpl.QueryPoller queryPoller = clientES.getTql().submitQuery(lds_name, qryName, params);
+        TqlResourceImpl.QueryPoller queryPoller = clientES.getTql().submitSharedQuery(lds_name, qryName, params);
         while (queryPoller.poll()) {
             // Just iterate to poll
         }
-        results = queryPoller.getResults();
+        final Iterable<Map<String, Object>> results = queryPoller.getResults();
         System.out.println("Query " + qryName + " finished\n");
         return results;
     }
