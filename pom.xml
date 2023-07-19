@@ -27,7 +27,7 @@
 			      <artifactId>inquire.client</artifactId>
 			      <version>7.2.0</version>
 			      <packaging>jar</packaging>
-			      <file>${basedir}/lib/inquire-client-7.2.0-jar-with-dependencies.jar</file>
+			      <file>${basedir}/lib/inquire-client-7.2.0-SP1-jar-with-dependencies.jar</file>
 			      <generatePom>true</generatePom>
 			   </configuration>
 			   <executions>
