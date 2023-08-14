@@ -30,7 +30,7 @@ public class Main {
             System.setProperty("org.owasp.esapi.logSpecial.discard", "true");
             HashMap<String, String> argsMap = new HashMap<>();
             //Define which parameters are acceptable
-            List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help");
+            List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help", "esPageSize");
             for (String arg : args) {
                 //Parse the parameters from the command line
                 String[] splitArg = arg.split("-{2}|=");
@@ -65,10 +65,10 @@ public class Main {
             String queryName = argsMap.getOrDefault("query", "all");
             String dateFrom = argsMap.getOrDefault("from", null);
             String dateTo = argsMap.getOrDefault("to", null);
+            String esPageSize = argsMap.getOrDefault("esPageSize", null);
             boolean exportToSheets = argsMap.containsKey("google_sheets");
             boolean exportToSql = argsMap.containsKey("azure_sql");
             boolean exportOnly = argsMap.containsKey("export_only");
-
 
             // This block checks whether an export option was given with --export_only
             if (exportOnly && !exportToSheets && !exportToSql) {
@@ -128,7 +128,7 @@ public class Main {
                     outputFolderPath += (outputFolderPath.charAt(outputFolderPath.length() - 1) == '/' ? "" : "/") + (fileName.split("_config")[0] + "/");
 
                     System.out.println("Output file path: " + outputFolderPath);
-                    emptyFolder(new File(outputFolderPath));
+                    if (!exportOnly) emptyFolder(new File(outputFolderPath));
 
                     //Mandatory for --google_sheets
                     String googleCredentialsPath = prop.getProperty("googleCredentialsPath");
@@ -229,7 +229,7 @@ public class Main {
                     // This block will only execute if new reports are needed, otherwise it will use the current reports in the output directory
                     if (!exportOnly) {
                         //This is the entry point for the Inquire Data class, returns a serialized Map with the data of all shared queries (or requested one) in the LDS.
-                        HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout);
+                        HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout, esPageSize);
                         //Update number of run queries for report
                         numberOfInquireQueries = Objects.requireNonNull(reportMap).size();
 
@@ -360,6 +360,9 @@ public class Main {
                         + "- to: Optional.\n" +
                         "\tDate for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z.\n" +
                         "\tMust have a from_date if used.\n"
+                        + "- esPageSize: Optional.\n" +
+                        "\tThe esPageSize parameter as per\n" +
+                        "\thttps://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery\n"
                         + "- help: Optional.\n" +
                         "\tShow this message.\n\n" +
                         "Configurations:\n" +

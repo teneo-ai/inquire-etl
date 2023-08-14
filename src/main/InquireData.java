@@ -33,9 +33,11 @@ public class InquireData {
      * @param password - The password for the user above
      * @param lds_name - The name of the Log Data Source in Inquire
      * @param timeout - Communications timeout, defaults to 30
+     * @param esPageSize - The esPageSize value as per
+     * https://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
      * @return resultMap - A map containing the queried Data
      */
-    public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String lds_name, String timeout) {
+    public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String lds_name, String timeout, String esPageSize) {
 
         try {
             System.out.println("Starting processing data from " + backend_URL + " at " + new Date());
@@ -57,7 +59,7 @@ public class InquireData {
                 if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !excludedQueryNamePattern.matcher(publishedQueryName).matches()) {
                     //Sleep between requests to avoid overwhelming Inquire
                     Thread.sleep(1000);
-                    Iterable<Map<String, Object>> results = runTqlQuery(clientES, lds_name, publishedQuery.getQuery(), dateFrom, dateTo, timeout, publishedQueryName);
+                    Iterable<Map<String, Object>> results = runTqlQuery(clientES, lds_name, publishedQuery.getQuery(), dateFrom, dateTo, timeout, esPageSize, publishedQueryName);
                     resultsMap.put(publishedQuery.getPublishedName(), results);
                 }
             }
@@ -104,11 +106,13 @@ public class InquireData {
      * @param from - Time limit
      * @param to - Time limit
      * @param timeout - Seconds before giving up on connection
+     * @param esPageSize - The esPageSize value as per
+     * https://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
      * @param qryName - Name of the shared query
      * @return map with query result values
      * @throws Exception Something went wrong
      */
-    public static Iterable<Map<String, Object>> runTqlQuery(TeneoInquireClient clientES, String lds_name, String qry, String from, String to, String timeout, String qryName) throws Exception {
+    private static Iterable<Map<String, Object>> runTqlQuery(TeneoInquireClient clientES, String lds_name, String qry, String from, String to, String timeout, String esPageSize, String qryName) throws Exception {
         /*
         System.setErr(new PrintStream(new OutputStream() {
             public void write(int b) {
@@ -127,6 +131,12 @@ public class InquireData {
             final String dateToUtc = Long.toString(Objects.requireNonNull(format).parse(to).getTime());
             params.put("to", dateToUtc);
         }
+
+        // SDCS-54
+        // https://artificialsolutions.atlassian.net/browse/SDCS-54?focusedCommentId=73948
+        // adding esPageSize to params as per
+        // https://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
+        if (esPageSize != null && esPageSize.length() > 0) params.put("esPageSize", esPageSize);
 
         params.put("timeout", timeout);
 
