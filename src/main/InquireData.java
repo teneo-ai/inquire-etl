@@ -145,8 +145,9 @@ public class InquireData {
         // results = clientES.executeQuery(lds_name, qry, params);
         
         TqlResourceImpl.QueryPoller queryPoller = clientES.getTql().submitSharedQuery(lds_name, qryName, params);
-        while (queryPoller.poll()) {
-            // Just iterate to poll
+        System.out.println("Polling");
+        for (int i = 1; !queryPoller.poll(); i++) {
+            System.out.println("Continuing polling " + i + "...");
         }
         final Iterable<Map<String, Object>> results = queryPoller.getResults();
         System.out.println("Query " + qryName + " finished\n");

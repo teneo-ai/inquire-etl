@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.artisol.teneo</groupId>
     <artifactId>inquire_etl</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
