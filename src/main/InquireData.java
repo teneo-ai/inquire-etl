@@ -34,7 +34,7 @@ public class InquireData {
      * @param lds_name - The name of the Log Data Source in Inquire
      * @param timeout - Communications timeout, defaults to 30
      * @param esPageSize - The esPageSize value as per
-     * https://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
+     * https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
      * @return resultMap - A map containing the queried Data
      */
     public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String lds_name, String timeout, String esPageSize) {
@@ -107,7 +107,7 @@ public class InquireData {
      * @param to - Time limit
      * @param timeout - Seconds before giving up on connection
      * @param esPageSize - The esPageSize value as per
-     * https://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
+     * https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
      * @param qryName - Name of the shared query
      * @return map with query result values
      * @throws Exception Something went wrong
@@ -135,7 +135,7 @@ public class InquireData {
         // SDCS-54
         // https://artificialsolutions.atlassian.net/browse/SDCS-54?focusedCommentId=73948
         // adding esPageSize to params as per
-        // https://developers.teneo.ai/documentation/7.2.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
+        // https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
         if (esPageSize != null && esPageSize.length() > 0) params.put("esPageSize", esPageSize);
 
         params.put("timeout", timeout);
