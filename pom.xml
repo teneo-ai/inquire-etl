@@ -25,9 +25,9 @@
 			   <configuration>
 			      <groupId>com.artisol.teneo</groupId>
 			      <artifactId>inquire.client</artifactId>
-			      <version>7.3.0</version>
+			      <version>7.4.0</version>
 			      <packaging>jar</packaging>
-			      <file>${basedir}/lib/inquire-client-7.3.0-SP1-jar-with-dependencies.jar</file>
+			      <file>${basedir}/lib/inquire-client-7.4.0-SP1-jar-with-dependencies.jar</file>
 			      <generatePom>true</generatePom>
 			   </configuration>
 			   <executions>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>com.artisol.teneo</groupId>
             <artifactId>inquire.client</artifactId>
-            <version>7.3.0</version>
+            <version>7.4.0</version>
         </dependency>
         <dependency>
             <groupId>javax.xml.bind</groupId>

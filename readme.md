@@ -32,7 +32,7 @@ java -jar "Inquire_Extract.jar" [--config=<config> --google_sheets --azure_sql -
   Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ e.g. 2017-08-31T23:55:01Z.
   Must have a from_date if used.
 - **esPageSize**: Optional.
-  The esPageSize parameter as per [the documentation](https://developers.teneo.ai/documentation/7.3.0/swagger/teneo-inquire/swagger/index.html#/tql/submitSharedQuery)
+  The esPageSize parameter as per [the documentation](https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitSharedQuery)
 - **help**: Optional.
   Show this message.
 
