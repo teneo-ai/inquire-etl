@@ -33,6 +33,8 @@ java -jar "Inquire_Extract.jar" [--config=<config> --google_sheets --azure_sql -
   Must have a from_date if used.
 - **esPageSize**: Optional.
   The esPageSize parameter as per [the documentation](https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitSharedQuery)
+- **api_version**: Optional.
+  Version of the Inquire API to use. Valid format is an integer. i.e. 1 for V1, 2 for V2 etc. It defaults to the latest if not provided.
 - **help**: Optional.
   Show this message.
 
@@ -66,3 +68,5 @@ Create a *_config.properties file with the following entries =>
   Separator used between fields in the output files. Defaults to 'json'.
 - **timeout**: Optional.
   Timeout for queries. Defaults to 30 seconds.
+- - **api_version**: Optional.
+    Version of the Inquire API to use. Valid format is an integer. i.e. 1 for V1, 2 for V2 etc. It defaults to the latest if not provided. If specified as a parameter the parameter takes preference.

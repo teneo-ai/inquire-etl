@@ -23,6 +23,7 @@ public class Main {
      *             --query : Optional. name of published query required. This is not case-sensitive. Defaults to the value 'all' which produces all published queries in the LDS.\n"
      *             --from : Optional. Date for the query search to start from. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must be have a to_date if used.\n"
      *             --to : Optional. Date for the query search to end. Valid format is yyyy-MM-ddTHH:mm:ssZ or yyyy-MM-dd e.g. 2017-08-31T23:55:01Z. Must have a from_date if used.\n"
+     *             --api_version : Optional. Version of the Inquire API to use. Valid format is an integer. i.e. 1 for V1, 2 for V2 etc."
      */
     public static void main(String[] args) throws Exception {
 
@@ -30,7 +31,7 @@ public class Main {
             System.setProperty("org.owasp.esapi.logSpecial.discard", "true");
             HashMap<String, String> argsMap = new HashMap<>();
             //Define which parameters are acceptable
-            List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help", "esPageSize");
+            List<String> legalParams = Arrays.asList("config", "google_sheets", "azure_sql", "export_only", "query", "from", "to", "help", "esPageSize", "api_version");
             for (String arg : args) {
                 //Parse the parameters from the command line
                 String[] splitArg = arg.split("-{2}|=");
@@ -69,6 +70,7 @@ public class Main {
             boolean exportToSheets = argsMap.containsKey("google_sheets");
             boolean exportToSql = argsMap.containsKey("azure_sql");
             boolean exportOnly = argsMap.containsKey("export_only");
+            String apiVersion = argsMap.getOrDefault("api_version", null);
 
             // This block checks whether an export option was given with --export_only
             if (exportOnly && !exportToSheets && !exportToSql) {
@@ -122,6 +124,9 @@ public class Main {
                     //Optional
                     String separator = prop.getProperty("separator");
                     String timeout = prop.getProperty("timeout");
+                    if (prop.getProperty("apiVersion") != null && apiVersion == null) {
+                        apiVersion = prop.getProperty("apiVersion");
+                    }
 
                     //Will create output folder path from config or default to system Temp folder
                     String outputFolderPath = (String) prop.getOrDefault("outputDir", System.getProperty("java.io.tmpdir") + "/inquire_exporter/");
@@ -229,102 +234,105 @@ public class Main {
                     // This block will only execute if new reports are needed, otherwise it will use the current reports in the output directory
                     if (!exportOnly) {
                         //This is the entry point for the Inquire Data class, returns a serialized Map with the data of all shared queries (or requested one) in the LDS.
-                        HashMap<String, Iterable<Map<String, Object>>> reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout, esPageSize);
-                        //Update number of run queries for report
-                        numberOfInquireQueries = Objects.requireNonNull(reportMap).size();
+                        HashMap<String, Iterable<Map<String, Object>>> reportMap;
+                        reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout, esPageSize, apiVersion);
+                        if (reportMap != null) {
+                            //Update number of run queries for report
+                            numberOfInquireQueries = reportMap.size();
 
-                        //Iterate over the result of each query to create a report file
-                        for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
-                            //Create json file if requested separator is not json and Google Sheet export is requested
-                            if (exportToSheets && !separator.equals("json")) {
-                                formatCount.add("json");
+                            //Iterate over the result of each query to create a report file
+                            for (Map.Entry<String, Iterable<Map<String, Object>>> report : reportMap.entrySet()) {
+                                //Create json file if requested separator is not json and Google Sheet export is requested
+                                if (exportToSheets && !separator.equals("json")) {
+                                    formatCount.add("json");
+                                    numberOfFilesWritten++;
+                                    LocalFile.output("json", report, outputFolderPath);
+                                }
+                                //Create CSV file if requested separator is not "," and Azure SQL export is requested.
+                                //TODO => Allow for string csv to be used in config in place of ","
+                                if (exportToSql && !separator.equals(",")) {
+                                    formatCount.add("csv");
+                                    numberOfFilesWritten++;
+                                    LocalFile.output(",", report, outputFolderPath);
+                                }
+                                //Create report file with separator if it wasn't created for the export options above.
+                                formatCount.add(separator.equals(",") ? "csv" : separator);
                                 numberOfFilesWritten++;
-                                LocalFile.output("json", report, outputFolderPath);
+                                LocalFile.output(separator, report, outputFolderPath);
                             }
-                            //Create CSV file if requested separator is not "," and Azure SQL export is requested.
-                            //TODO => Allow for string csv to be used in config in place of ","
-                            if (exportToSql && !separator.equals(",")) {
-                                formatCount.add("csv");
-                                numberOfFilesWritten++;
-                                LocalFile.output(",", report, outputFolderPath);
+                            //Append report strings with Inquire and file writter results
+                            finalReport
+                                    .append("Number Of Inquire Queries: \t")
+                                    .append(numberOfInquireQueries)
+                                    .append("\n")
+                                    .append("Number Of Files Written: \t")
+                                    .append(numberOfFilesWritten)
+                                    .append("\n")
+                                    .append("Format count: \t\t\t\t")
+                                    .append(formatCount.size())
+                                    .append("\n")
+                                    .append("Format list: \t\t\t\t")
+                                    .append(formatCount)
+                                    .append("\n\n");
+
+                            //This block handles export to Google Sheets
+                            if (exportToSheets) {
+                                //Entry point to Google Sheets exporter class, returns a map with three lists, for updated, skipped and failed operations respectively.
+
+                                googleSheetsResults = GoogleSheetExport.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
+
+                                List<String> updatedList = googleSheetsResults.get("updated");
+                                List<String> skippedList = googleSheetsResults.get("skipped");
+                                List<String> failedList = googleSheetsResults.get("failed");
+
+                                //Append Google Sheets export results to final report
+                                finalReport.append("Updated Google Sheets: \t\t")
+                                        .append(updatedList.size())
+                                        .append("\t")
+                                        .append(updatedList)
+                                        .append("\n")
+                                        .append("Skipped Google Sheets: \t\t")
+                                        .append(skippedList.size())
+                                        .append("\t")
+                                        .append(skippedList)
+                                        .append("\n")
+                                        .append("Failed Google Sheets: \t\t")
+                                        .append(failedList.size())
+                                        .append("\t")
+                                        .append(failedList)
+                                        .append("\n");
                             }
-                            //Create report file with separator if it wasn't created for the export options above.
-                            formatCount.add(separator.equals(",") ? "csv" : separator);
-                            numberOfFilesWritten++;
-                            LocalFile.output(separator, report, outputFolderPath);
+
+                            //This block controls export to Azure SQL
+                            if (exportToSql) {
+                                //Entry point for Azure SQL exporter class, returns a map on lists with the updated, skipped and failed tables.
+                                azureTablesResults = new AzureSqlExport().load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
+                                List<String> updatedList = azureTablesResults.get("updated");
+                                List<String> skippedList = azureTablesResults.get("skipped");
+                                List<String> failedList = azureTablesResults.get("failed");
+
+                                finalReport.append("Updated Azure SQL Tables: \t")
+                                        .append(updatedList.size())
+                                        .append("\t")
+                                        .append(updatedList)
+                                        .append("\n")
+                                        .append("Skipped Azure SQL Tables: \t")
+                                        .append(skippedList.size())
+                                        .append("\t")
+                                        .append(skippedList)
+                                        .append("\n")
+                                        .append("Failed Azure SQL Tables: \t")
+                                        .append(failedList.size())
+                                        .append("\t")
+                                        .append(failedList)
+                                        .append("\n");
+                            }
+                            System.out.println(finalReport);
                         }
-                        //Append report strings with Inquire and file writter results
-                        finalReport
-                                .append("Number Of Inquire Queries: \t")
-                                .append(numberOfInquireQueries)
-                                .append("\n")
-                                .append("Number Of Files Written: \t")
-                                .append(numberOfFilesWritten)
-                                .append("\n")
-                                .append("Format count: \t\t\t\t")
-                                .append(formatCount.size())
-                                .append("\n")
-                                .append("Format list: \t\t\t\t")
-                                .append(formatCount)
-                                .append("\n\n");
+                    } else {
+                        throw new IOException("Path provided does not contain a valid properties file");
                     }
 
-                    //This block handles export to Google Sheets
-                    if (exportToSheets) {
-                        //Entry point to Google Sheets exporter class, returns a map with three lists, for updated, skipped and failed operations respectively.
-
-                        googleSheetsResults = GoogleSheetExport.load(googleCredentialsPath, googleCloudAppName, googleSheetId, outputFolderPath);
-
-                        List<String> updatedList = googleSheetsResults.get("updated");
-                        List<String> skippedList = googleSheetsResults.get("skipped");
-                        List<String> failedList = googleSheetsResults.get("failed");
-
-                        //Append Google Sheets export results to final report
-                        finalReport.append("Updated Google Sheets: \t\t")
-                                .append(updatedList.size())
-                                .append("\t")
-                                .append(updatedList)
-                                .append("\n")
-                                .append("Skipped Google Sheets: \t\t")
-                                .append(skippedList.size())
-                                .append("\t")
-                                .append(skippedList)
-                                .append("\n")
-                                .append("Failed Google Sheets: \t\t")
-                                .append(failedList.size())
-                                .append("\t")
-                                .append(failedList)
-                                .append("\n");
-                    }
-
-                    //This block controls export to Azure SQL
-                    if (exportToSql) {
-                        //Entry point for Azure SQL exporter class, returns a map on lists with the updated, skipped and failed tables.
-                        azureTablesResults = new AzureSqlExport().load(azureServerName, azureDatabaseName, azureUser, azurePassword, outputFolderPath);
-                        List<String> updatedList = azureTablesResults.get("updated");
-                        List<String> skippedList = azureTablesResults.get("skipped");
-                        List<String> failedList = azureTablesResults.get("failed");
-
-                        finalReport.append("Updated Azure SQL Tables: \t")
-                                .append(updatedList.size())
-                                .append("\t")
-                                .append(updatedList)
-                                .append("\n")
-                                .append("Skipped Azure SQL Tables: \t")
-                                .append(skippedList.size())
-                                .append("\t")
-                                .append(skippedList)
-                                .append("\n")
-                                .append("Failed Azure SQL Tables: \t")
-                                .append(failedList.size())
-                                .append("\t")
-                                .append(failedList)
-                                .append("\n");
-                    }
-
-                    System.out.println(finalReport);
-                } else {
-                    throw new IOException("Path provided does not contain a valid properties file");
                 }
             }
         } catch (Exception e) {
@@ -345,6 +353,8 @@ public class Main {
                         "\tConfiguration file or directory e.g. etc/ or test_config.properties.\n" +
                         "\tIf a directory is selected the application will iterate over all *_config.properties files found in the directory.\n" +
                         "\tDefaults to application root.\n"
+                        + "- api_version: Optional.\n" +
+                        "\tVersion of the Inquire API to use. Defaults to the latest.\n"
                         + "- google_sheets: Optional.\n" +
                         "\tExport the report data to Google sheets. Requires Google Config in config file. Will generate .json reports in a addition to any specified be the separator.\n"
                         + "- azure_sql: Optional.\n" +
@@ -392,7 +402,9 @@ public class Main {
                         "- separator: Optional.\n" +
                         "\tSeparator used between fields in the output files. Defaults to 'json'.\n" +
                         "- timeout: Optional.\n" +
-                        "\tTimeout for queries. Defaults to 30 seconds." +
+                        "\tTimeout for queries. Defaults to 30 seconds.\n" +
+                        "- apiVersion: Optional.\n" +
+                        "\tVersion of the Inquire API to use. Defaults to the latest. If specified as a parameter the parameter takes preference.\n" +
                         "\n*********************************************************************"
 
         );
