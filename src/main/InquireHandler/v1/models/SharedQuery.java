@@ -1,11 +1,8 @@
 package main.InquireHandler.v1.models;
 
-import java.io.Serializable;
 import java.util.UUID;
 
-public class SharedQuery implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class SharedQuery {
 
     private UUID id;
     private String publishedName;

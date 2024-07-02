@@ -20,10 +20,9 @@ import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Map;
 import java.util.TimeZone;
 
-public abstract class AbstractHandler {
+public class InquireRest {
     protected final AuthorizationFilter authorizationFilter;
     private static final Client client;
     public final WebTarget webTarget;
@@ -52,7 +51,7 @@ public abstract class AbstractHandler {
         client.register(MultiPartFeature.class);
     }
 
-    public AbstractHandler(final URL serverUrl, final String accessToken) throws IllegalArgumentException {
+    public InquireRest(final URL serverUrl, final String accessToken) throws IllegalArgumentException {
 
         if (serverUrl == null) {
             throw new IllegalArgumentException("Server URL parameter cannot be null.");
@@ -62,6 +61,12 @@ public abstract class AbstractHandler {
         webTarget = client.target(serverUrl.toString()).path("rest");
 
         authorizationFilter = new AuthorizationFilter(accessToken);
+        webTarget.register(authorizationFilter);
+    }
+
+    public InquireRest(final WebTarget webTarget, final AuthorizationFilter authorizationFilter) throws IllegalArgumentException {
+        this. webTarget = webTarget;
+        this.authorizationFilter = authorizationFilter;
         webTarget.register(authorizationFilter);
     }
 
@@ -96,15 +101,5 @@ public abstract class AbstractHandler {
                 ? MediaType.APPLICATION_OCTET_STREAM_TYPE
                 : MediaType.APPLICATION_JSON_TYPE;
     }
-
-    public abstract String login(final String username, final String password);
-
-    public abstract void logout();
-
-    public abstract void submitSharedQuery(final String ldsName, final String identifier, final Map<String, Object> parameters) throws Exception;
-
-    public abstract Iterable<Map<String, Object>> getResults();
-
-    public abstract boolean poll() throws Exception;
 
 }

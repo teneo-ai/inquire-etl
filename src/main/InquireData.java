@@ -5,7 +5,8 @@
  */
 package main;
 
-import main.InquireHandler.AbstractHandler;
+import main.InquireHandler.AbstractInquireHandler;
+import main.InquireHandler.AbstractPoller;
 import main.InquireHandler.v1.InquireHandlerV1;
 import main.InquireHandler.v2.InquireHandlerV2;
 import java.net.URL;
@@ -38,7 +39,7 @@ public class InquireData {
         try {
             System.out.println("Starting processing data from " + backend_URL + " at " + new Date());
             LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap = new LinkedHashMap<>();
-            AbstractHandler inquireHandler = null;
+            AbstractInquireHandler inquireHandler = null;
             if (apiVersion == null || apiVersion.equals("1")) {
                 inquireHandler = new InquireHandlerV1(new URL(backend_URL), null);
                 inquireHandler.login(username, password);
@@ -69,7 +70,7 @@ public class InquireData {
         return null;
     }
 
-    private static void generateResults(String queryName, String dateFrom, String dateTo, String lds_name, String timeout, String esPageSize, LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap, AbstractHandler inquireHandler, String publishedQueryName, String publishedQueryQuery) {
+    private static void generateResults(String queryName, String dateFrom, String dateTo, String lds_name, String timeout, String esPageSize, LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap, AbstractInquireHandler inquireHandler, String publishedQueryName, String publishedQueryQuery) {
         if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !excludedQueryNamePattern.matcher(publishedQueryName).matches()) {
             try {
                 Iterable<Map<String, Object>> results = runTqlQuery(inquireHandler, lds_name, publishedQueryQuery, dateFrom, dateTo, timeout, esPageSize, publishedQueryName);
@@ -94,7 +95,7 @@ public class InquireData {
      * @return map with query result values
      * @throws Exception Something went wrong
      */
-    private static Iterable<Map<String, Object>> runTqlQuery(AbstractHandler handler, String lds_name, String qry, String from, String to, String timeout, String esPageSize, String qryName) throws Exception {
+    private static Iterable<Map<String, Object>> runTqlQuery(AbstractInquireHandler handler, String lds_name, String qry, String from, String to, String timeout, String esPageSize, String qryName) throws Exception {
         LinkedHashMap<String, Object> params = new LinkedHashMap<>();
         // Setup dates if used
         DateFormat format = null;
@@ -118,10 +119,10 @@ public class InquireData {
 
         System.out.println("Running query: " + qryName + "\nWith params: " + params);
 
-        handler.submitSharedQuery(lds_name, qryName, params);
-        while (!handler.poll()) {
+        AbstractPoller poller = handler.submitSharedQuery(lds_name, qryName, params);
+        while (!poller.poll()) {
         }
-        final Iterable<Map<String, Object>> results = handler.getResults();
+        final Iterable<Map<String, Object>> results = poller.getResults();
         System.out.println("Query " + qryName + " finished\n");
         return results;
     }

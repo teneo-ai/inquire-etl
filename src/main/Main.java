@@ -128,6 +128,10 @@ public class Main {
                         apiVersion = prop.getProperty("apiVersion");
                     }
 
+                    if (apiVersion != null && Integer.parseInt(apiVersion) > 1) {
+                        throw new IllegalArgumentException("Only version 1 of the API is currently supported.");
+                    }
+
                     //Will create output folder path from config or default to system Temp folder
                     String outputFolderPath = (String) prop.getOrDefault("outputDir", System.getProperty("java.io.tmpdir") + "/inquire_exporter/");
                     outputFolderPath += (outputFolderPath.charAt(outputFolderPath.length() - 1) == '/' ? "" : "/") + (fileName.split("_config")[0] + "/");

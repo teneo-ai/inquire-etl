@@ -3,13 +3,10 @@ This tool will run Shared Queries from and Inquire Log Data Source and create fi
 This is an automation tool, it is not meant for extended manual use. The intended functionality is for the compiled .jar file to be run periodically by a Cron job in order to update a data source.
 
 # Build
-Use Maven command to first validate:
-`mvn validate`
-
-Now build
+Use Maven command to build:
 `mvn clean compile assembly:single`
 # Usage
-java -jar "Inquire_Extract.jar" [--config=<config> --google_sheets --azure_sql --export_only --query=<query> --from=<from_date> --to=<to_date> --help]
+java -jar "Inquire_Extract.jar" [--config=<config> --google_sheets --azure_sql --export_only --query=<query> --from=<from_date> --to=<to_date> --api_version=<api_version> --help]
 
 # Parameters
 - **config**: Optional.
@@ -68,5 +65,5 @@ Create a *_config.properties file with the following entries =>
   Separator used between fields in the output files. Defaults to 'json'.
 - **timeout**: Optional.
   Timeout for queries. Defaults to 30 seconds.
-- - **api_version**: Optional.
+- **apiVersion**: Optional.
     Version of the Inquire API to use. Valid format is an integer. i.e. 1 for V1, 2 for V2 etc. It defaults to the latest if not provided. If specified as a parameter the parameter takes preference.
