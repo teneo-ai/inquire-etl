@@ -66,7 +66,7 @@ public class InquireData {
                     generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
                 }
             }
-            if (apiToken != null) {
+            if (apiToken == null) {
                 inquireHandler.logout();
             }
             return resultsMap;
