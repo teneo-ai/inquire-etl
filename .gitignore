@@ -2,7 +2,6 @@
 /.vscode/
 /bu/
 /target/
-!/target/inquire_etl-1.0.0-jar-with-dependencies.jar
 /reports/
 /etc/credentials.json
 /configs/
