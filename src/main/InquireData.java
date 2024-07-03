@@ -28,21 +28,25 @@ public class InquireData {
      * @param backend_URL - The address of the Inquire Endpoint
      * @param username - The username that is allowed to query shared queries in Inquire
      * @param password - The password for the user above
+     * @param apiToken - The apiToken that is used if username and password is not being used.
      * @param lds_name - The name of the Log Data Source in Inquire
      * @param timeout - Communications timeout, defaults to 30
      * @param esPageSize - The esPageSize value as per
      * https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
+     * @param apiVersion - The Inquire API version to use.
      * @return resultMap - A map containing the queried Data
      */
-    public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String lds_name, String timeout, String esPageSize, Integer apiVersion) {
+    public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String apiToken, String lds_name, String timeout, String esPageSize, Integer apiVersion) {
 
         try {
             System.out.println("Starting processing data from " + backend_URL + " at " + new Date());
             LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap = new LinkedHashMap<>();
             AbstractInquireHandler inquireHandler = null;
             if (apiVersion == null || apiVersion.equals(1)) {
-                inquireHandler = new InquireHandlerV1(new URL(backend_URL), null);
-                inquireHandler.login(username, password);
+                inquireHandler = new InquireHandlerV1(new URL(backend_URL), apiToken);
+                if (apiToken == null) {
+                    inquireHandler.login(username, password);
+                }
                 List<main.inquirehandler.v1.models.SharedQuery> sharedQueries = ((InquireHandlerV1) inquireHandler).getSharedQueries(lds_name);
                 for (final main.inquirehandler.v1.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
@@ -51,8 +55,10 @@ public class InquireData {
                 }
             }
             else if (apiVersion.equals(2)) {
-                inquireHandler = new InquireHandlerV2(new URL(backend_URL), null);
-                inquireHandler.login(username, password);
+                inquireHandler = new InquireHandlerV2(new URL(backend_URL), apiToken);
+                if (apiToken == null) {
+                    inquireHandler.login(username, password);
+                }
                 List<main.inquirehandler.v2.models.SharedQuery> sharedQueries = ((InquireHandlerV2) inquireHandler).getSharedQueries(lds_name);
                 for (final main.inquirehandler.v2.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
@@ -60,7 +66,9 @@ public class InquireData {
                     generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
                 }
             }
-            inquireHandler.logout();
+            if (apiToken != null) {
+                inquireHandler.logout();
+            }
             return resultsMap;
 
         } catch (Exception e) {

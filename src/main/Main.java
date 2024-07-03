@@ -127,6 +127,7 @@ public class Main {
                     String lds_name = prop.getProperty("lds");
                     String username = prop.getProperty("inquireUser");
                     String password = prop.getProperty("inquirePassword");
+                    String apiToken = prop.getProperty("apiToken");
                     //Optional
                     String separator = prop.getProperty("separator");
                     String timeout = prop.getProperty("timeout");
@@ -170,11 +171,20 @@ public class Main {
                     if (lds_name == null) {
                         missingProperties += "\t- lds: mandatory. The name of the LDS.\n";
                     }
-                    if (username == null) {
-                        missingProperties += "\t- username: mandatory. user name to access the LDS\n";
+                    if (username == null && password == null && apiToken == null) {
+                        missingProperties += "\t- username: mandatory if no API token is provided. User name to access the LDS\n";
+                        missingProperties += "\t- password: mandatory if logging in with a user name. User password to access the LDS\n";
+                        missingProperties += "\t- apiToken: mandatory if a user name and password is not provided. Api token to access the LDS\n";
                     }
-                    if (password == null) {
-                        missingProperties += "\t- password: mandatory. user password to access the LDS\n";
+                    if (username != null && password == null && apiToken == null) {
+                        missingProperties += "\t- password: mandatory if logging in with a user name. User password to access the LDS\n";
+                    }
+                    if (username == null && password != null && apiToken == null) {
+                        missingProperties += "\t- username: mandatory if no API token is provided. User name to access the LDS\n";
+                    }
+
+                    if (username != null && password != null && apiToken != null) {
+                        throw new RuntimeException("Configuration File contains login information and an API token. Only one authentication method should be provided.");
                     }
 
                     //Specific properties
@@ -218,7 +228,7 @@ public class Main {
 
                     if (!missingProperties.equals("")) {
                         String errorString = (mandatoryMissing ? "ERROR:" : "WARNING:") + " Missing configuration properties. \n"
-                                + "The following could not be found: \n"
+                                + "The following could not be found or had identifiable problems: \n"
                                 + missingProperties;
                         System.out.println(errorString);
                         if (mandatoryMissing) {
@@ -249,7 +259,7 @@ public class Main {
                     if (!exportOnly) {
                         //This is the entry point for the Inquire Data class, returns a serialized Map with the data of all shared queries (or requested one) in the LDS.
                         HashMap<String, Iterable<Map<String, Object>>> reportMap;
-                        reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, lds_name, timeout, esPageSize, apiVersion);
+                        reportMap = InquireData.get(queryName, dateFrom, dateTo, backend_URL, username, password, apiToken, lds_name, timeout, esPageSize, apiVersion);
                         if (reportMap != null) {
                             //Update number of run queries for report
                             numberOfInquireQueries = reportMap.size();
@@ -393,10 +403,12 @@ public class Main {
                         "Create a *_config.properties file with the following entries: \n" +
                         "- inquireBackend: Mandatory.\n" +
                         "\tThe URL to the Teneo Inquire backend\n" +
-                        "- inquireUser: Mandatory.\n" +
+                        "- inquireUser: Mandatory if not authenticating with an API token.\n" +
                         "\tUser name to access the LDS.\n" +
-                        "- inquirePassword: Mandatory.\n" +
+                        "- inquirePassword: Mandatory if authenticating via username.\n" +
                         "\tUser password to access the LDS.\n" +
+                        "- apiToken: Mandatory if not authenticating via username and password.\n" +
+                        "\tApi token to access the LDS.\n" +
                         "- lds: Mandatory.\n" +
                         "\tThe name of the LDS in Inquire.\n" +
                         "- googleCredentialsPath: Mandatory if --google_sheets is used.\n" +

@@ -41,10 +41,12 @@ Create a *_config.properties file with the following entries =>
 
 - **inquireBackend**: Mandatory.
   The URL to the Teneo Inquire backend
-- **inquireUser**: Mandatory.
+- **inquireUser**: Mandatory if not authenticating with an API token.
   User name to access the LDS.
-- **inquirePassword**: Mandatory.
+- **inquirePassword**: Mandatory if authenticating via username.
   User password to access the LDS.
+- **apiToken**: Mandatory if not authenticating via username and password.
+  Api token to access the LDS.
 - **lds**: Mandatory.
   The name of the LDS in Inquire.
 - **googleCredentialsPath**: Mandatory if --google_sheets is used.
