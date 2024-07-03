@@ -1,6 +1,6 @@
-package main.InquireHandler;
+package main.inquirehandler;
 
-import main.InquireHandler.v1.models.AbstractQueryResultMessage;
+import main.inquirehandler.v1.models.AbstractQueryResultMessage;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.util.Map;

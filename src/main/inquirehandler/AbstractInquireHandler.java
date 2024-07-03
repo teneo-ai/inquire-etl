@@ -1,4 +1,4 @@
-package main.InquireHandler;
+package main.inquirehandler;
 
 import java.net.URL;
 import java.util.Map;

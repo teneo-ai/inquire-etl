@@ -1,8 +1,8 @@
-package main.InquireHandler.v2;
+package main.inquirehandler.v2;
 
-import main.InquireHandler.AbstractInquireHandler;
-import main.InquireHandler.AbstractPoller;
-import main.InquireHandler.v2.models.SharedQuery;
+import main.inquirehandler.AbstractInquireHandler;
+import main.inquirehandler.AbstractPoller;
+import main.inquirehandler.v2.models.SharedQuery;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;

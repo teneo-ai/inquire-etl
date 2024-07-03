@@ -1,4 +1,4 @@
-package main.InquireHandler.v1.models;
+package main.inquirehandler.v1.models;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;

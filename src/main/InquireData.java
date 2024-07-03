@@ -5,10 +5,10 @@
  */
 package main;
 
-import main.InquireHandler.AbstractInquireHandler;
-import main.InquireHandler.AbstractPoller;
-import main.InquireHandler.v1.InquireHandlerV1;
-import main.InquireHandler.v2.InquireHandlerV2;
+import main.inquirehandler.AbstractInquireHandler;
+import main.inquirehandler.AbstractPoller;
+import main.inquirehandler.v1.InquireHandlerV1;
+import main.inquirehandler.v2.InquireHandlerV2;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,8 +43,8 @@ public class InquireData {
             if (apiVersion == null || apiVersion.equals("1")) {
                 inquireHandler = new InquireHandlerV1(new URL(backend_URL), null);
                 inquireHandler.login(username, password);
-                List<main.InquireHandler.v1.models.SharedQuery> sharedQueries = ((InquireHandlerV1) inquireHandler).getSharedQueries(lds_name);
-                for (final main.InquireHandler.v1.models.SharedQuery publishedQuery : sharedQueries) {
+                List<main.inquirehandler.v1.models.SharedQuery> sharedQueries = ((InquireHandlerV1) inquireHandler).getSharedQueries(lds_name);
+                for (final main.inquirehandler.v1.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
                     // It will also filter out the usage queries used by billing to monitor usage.
                     generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName(), publishedQuery.getQuery());
@@ -53,8 +53,8 @@ public class InquireData {
             else if (apiVersion.equals("2")) {
                 inquireHandler = new InquireHandlerV2(new URL(backend_URL), null);
                 inquireHandler.login(username, password);
-                List<main.InquireHandler.v2.models.SharedQuery> sharedQueries = ((InquireHandlerV2) inquireHandler).getSharedQueries(lds_name);
-                for (final main.InquireHandler.v2.models.SharedQuery publishedQuery : sharedQueries) {
+                List<main.inquirehandler.v2.models.SharedQuery> sharedQueries = ((InquireHandlerV2) inquireHandler).getSharedQueries(lds_name);
+                for (final main.inquirehandler.v2.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
                     // It will also filter out the usage queries used by billing to monitor usage.
                     generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName(), publishedQuery.getQuery());

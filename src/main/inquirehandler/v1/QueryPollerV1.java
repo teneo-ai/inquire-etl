@@ -1,11 +1,11 @@
-package main.InquireHandler.v1;
+package main.inquirehandler.v1;
 
-import main.InquireHandler.AbstractPoller;
-import main.InquireHandler.AuthorizationFilter;
-import main.InquireHandler.v1.models.AbstractQueryResultMessage;
-import main.InquireHandler.v1.models.ExecutionConfiguration;
-import main.InquireHandler.v1.models.FinalResultMessage;
-import main.InquireHandler.v1.models.StartExecutionMessage;
+import main.inquirehandler.AbstractPoller;
+import main.inquirehandler.AuthorizationFilter;
+import main.inquirehandler.v1.models.AbstractQueryResultMessage;
+import main.inquirehandler.v1.models.ExecutionConfiguration;
+import main.inquirehandler.v1.models.FinalResultMessage;
+import main.inquirehandler.v1.models.StartExecutionMessage;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.util.Map;

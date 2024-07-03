@@ -1,4 +1,4 @@
-package main.InquireHandler;
+package main.inquirehandler;
 
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;

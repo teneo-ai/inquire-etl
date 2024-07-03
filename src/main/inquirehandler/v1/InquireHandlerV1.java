@@ -1,8 +1,8 @@
-package main.InquireHandler.v1;
+package main.inquirehandler.v1;
 
-import main.InquireHandler.AbstractInquireHandler;
-import main.InquireHandler.AbstractPoller;
-import main.InquireHandler.v1.models.*;
+import main.inquirehandler.AbstractInquireHandler;
+import main.inquirehandler.AbstractPoller;
+import main.inquirehandler.v1.models.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Form;

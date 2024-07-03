@@ -1,4 +1,4 @@
-package main.InquireHandler.v1.models;
+package main.inquirehandler.v1.models;
 
 public abstract class AbstractQueryMessage implements Message {
 

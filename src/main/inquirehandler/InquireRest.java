@@ -1,4 +1,4 @@
-package main.InquireHandler;
+package main.inquirehandler;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.StreamReadConstraints;

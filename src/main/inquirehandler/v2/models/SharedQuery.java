@@ -1,4 +1,4 @@
-package main.InquireHandler.v2.models;
+package main.inquirehandler.v2.models;
 
 public class SharedQuery {
     public String getPublishedName() {
