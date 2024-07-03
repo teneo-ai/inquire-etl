@@ -25,7 +25,7 @@
                     <archive>
                         <manifest>
                             <mainClass>
-                                main/Main
+                                inquireetl/Main
                             </mainClass>
                         </manifest>
                     </archive>
