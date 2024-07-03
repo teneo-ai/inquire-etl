@@ -34,30 +34,30 @@ public class InquireData {
      * https://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery
      * @return resultMap - A map containing the queried Data
      */
-    public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String lds_name, String timeout, String esPageSize, String apiVersion) {
+    public static HashMap<String, Iterable<Map<String, Object>>> get(String queryName, String dateFrom, String dateTo, String backend_URL, String username, String password, String lds_name, String timeout, String esPageSize, Integer apiVersion) {
 
         try {
             System.out.println("Starting processing data from " + backend_URL + " at " + new Date());
             LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap = new LinkedHashMap<>();
             AbstractInquireHandler inquireHandler = null;
-            if (apiVersion == null || apiVersion.equals("1")) {
+            if (apiVersion == null || apiVersion.equals(1)) {
                 inquireHandler = new InquireHandlerV1(new URL(backend_URL), null);
                 inquireHandler.login(username, password);
                 List<main.inquirehandler.v1.models.SharedQuery> sharedQueries = ((InquireHandlerV1) inquireHandler).getSharedQueries(lds_name);
                 for (final main.inquirehandler.v1.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
                     // It will also filter out the usage queries used by billing to monitor usage.
-                    generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName(), publishedQuery.getQuery());
+                    generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
                 }
             }
-            else if (apiVersion.equals("2")) {
+            else if (apiVersion.equals(2)) {
                 inquireHandler = new InquireHandlerV2(new URL(backend_URL), null);
                 inquireHandler.login(username, password);
                 List<main.inquirehandler.v2.models.SharedQuery> sharedQueries = ((InquireHandlerV2) inquireHandler).getSharedQueries(lds_name);
                 for (final main.inquirehandler.v2.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
                     // It will also filter out the usage queries used by billing to monitor usage.
-                    generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName(), publishedQuery.getQuery());
+                    generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
                 }
             }
             inquireHandler.logout();
@@ -70,10 +70,10 @@ public class InquireData {
         return null;
     }
 
-    private static void generateResults(String queryName, String dateFrom, String dateTo, String lds_name, String timeout, String esPageSize, LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap, AbstractInquireHandler inquireHandler, String publishedQueryName, String publishedQueryQuery) {
+    private static void generateResults(String queryName, String dateFrom, String dateTo, String lds_name, String timeout, String esPageSize, LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap, AbstractInquireHandler inquireHandler, String publishedQueryName) {
         if ((queryName.equalsIgnoreCase(publishedQueryName) || queryName.equalsIgnoreCase("all")) && !excludedQueryNamePattern.matcher(publishedQueryName).matches()) {
             try {
-                Iterable<Map<String, Object>> results = runTqlQuery(inquireHandler, lds_name, publishedQueryQuery, dateFrom, dateTo, timeout, esPageSize, publishedQueryName);
+                Iterable<Map<String, Object>> results = runTqlQuery(inquireHandler, lds_name, dateFrom, dateTo, timeout, esPageSize, publishedQueryName);
                 resultsMap.put(publishedQueryName, results);
             } catch (Exception ex) {
                 System.out.println("ERROR: An error has occurred while processing query " + queryName + ". Will continue processing the other queries, please run this one again.");
@@ -85,7 +85,6 @@ public class InquireData {
     /**
      *
      * @param lds_name - Log Data Soruce Name
-     * @param qry - The query extracted from the shared query
      * @param from - Time limit
      * @param to - Time limit
      * @param timeout - Seconds before giving up on connection
@@ -95,7 +94,7 @@ public class InquireData {
      * @return map with query result values
      * @throws Exception Something went wrong
      */
-    private static Iterable<Map<String, Object>> runTqlQuery(AbstractInquireHandler handler, String lds_name, String qry, String from, String to, String timeout, String esPageSize, String qryName) throws Exception {
+    private static Iterable<Map<String, Object>> runTqlQuery(AbstractInquireHandler handler, String lds_name, String from, String to, String timeout, String esPageSize, String qryName) throws Exception {
         LinkedHashMap<String, Object> params = new LinkedHashMap<>();
         // Setup dates if used
         DateFormat format = null;

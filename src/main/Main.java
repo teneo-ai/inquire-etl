@@ -70,8 +70,14 @@ public class Main {
             boolean exportToSheets = argsMap.containsKey("google_sheets");
             boolean exportToSql = argsMap.containsKey("azure_sql");
             boolean exportOnly = argsMap.containsKey("export_only");
-            String apiVersion = argsMap.getOrDefault("api_version", null);
-
+            Integer apiVersion = null;
+            if (argsMap.containsKey("api_version")) {
+                try {
+                    apiVersion = Integer.valueOf(argsMap.get("api_version"));
+                } catch (NumberFormatException exception) {
+                    throw new IllegalArgumentException("--api_version " + '"' + argsMap.get("api_version") + '"' + " is not a valid number");
+                }
+            }
             // This block checks whether an export option was given with --export_only
             if (exportOnly && !exportToSheets && !exportToSql) {
                 throw new IllegalArgumentException("--export_only command received but neither --azure_sql nor --google_sheets were specified");
@@ -124,11 +130,15 @@ public class Main {
                     //Optional
                     String separator = prop.getProperty("separator");
                     String timeout = prop.getProperty("timeout");
-                    if (prop.getProperty("apiVersion") != null && apiVersion == null) {
-                        apiVersion = prop.getProperty("apiVersion");
+                    if (prop.containsKey("apiVersion") && apiVersion == null) {
+                        try {
+                            apiVersion = Integer.valueOf(prop.getProperty("apiVersion"));
+                        } catch (NumberFormatException exception) {
+                            throw new IllegalArgumentException("apiVersion " + '"' + prop.getProperty("apiVersion") + '"' + " is not a valid number");
+                        }
                     }
 
-                    if (apiVersion != null && Integer.parseInt(apiVersion) > 1) {
+                    if (apiVersion != null && apiVersion > 1) {
                         throw new IllegalArgumentException("Only version 1 of the API is currently supported.");
                     }
 
