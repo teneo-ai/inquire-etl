@@ -69,3 +69,5 @@ Create a *_config.properties file with the following entries =>
   Timeout for queries. Defaults to 30 seconds.
 - **apiVersion**: Optional.
     Version of the Inquire API to use. Valid format is an integer. i.e. 1 for V1, 2 for V2 etc. It defaults to the latest if not provided. If specified as a parameter the parameter takes preference.
+- **outputDir**: Optional.
+  The output directory to use. Defaults to a temporary directory.
