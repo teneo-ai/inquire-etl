@@ -396,7 +396,7 @@ public class Main {
                         "\tMust have a from_date if used.\n"
                         + "- esPageSize: Optional.\n" +
                         "\tThe esPageSize parameter as per\n" +
-                        "\thttps://developers.teneo.ai/documentation/7.4.0/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery\n"
+                        "\thttps://developers.teneo.ai/documentation/latest/swagger/teneo-inquire/swagger/index.html#/tql/submitQuery\n"
                         + "- help: Optional.\n" +
                         "\tShow this message.\n\n" +
                         "Configurations:\n" +
