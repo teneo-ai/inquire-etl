@@ -1,6 +1,5 @@
 package inquireetl.inquirehandler;
 
-import inquireetl.inquirehandler.v1.models.AbstractQueryResultMessage;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.util.Map;

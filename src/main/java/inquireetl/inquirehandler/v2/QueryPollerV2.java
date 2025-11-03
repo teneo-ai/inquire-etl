@@ -1,20 +1,20 @@
-package inquireetl.inquirehandler.v1;
+package inquireetl.inquirehandler.v2;
 
 import inquireetl.inquirehandler.AbstractPoller;
-import inquireetl.inquirehandler.AbstractQueryResultMessage;
 import inquireetl.inquirehandler.AuthorizationFilter;
-import inquireetl.inquirehandler.v1.models.ExecutionConfiguration;
-import inquireetl.inquirehandler.v1.models.FinalResultMessage;
-import inquireetl.inquirehandler.v1.models.StartExecutionMessage;
+import inquireetl.inquirehandler.AbstractQueryResultMessage;
+import inquireetl.inquirehandler.v2.models.ExecutionConfiguration;
+import inquireetl.inquirehandler.v2.models.FinalResultMessage;
+import inquireetl.inquirehandler.v2.models.StartExecutionMessage;
+import java.util.Map;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import java.util.Map;
 
-public class QueryPollerV1 extends AbstractPoller {
+public class QueryPollerV2 extends AbstractPoller {
 
     private AbstractQueryResultMessage lastMessage;
 
-    public QueryPollerV1(WebTarget webTarget, AuthorizationFilter authorizationFilter, AbstractQueryResultMessage lastMessage, Object timeout) {
+    public QueryPollerV2(WebTarget webTarget, AuthorizationFilter authorizationFilter, AbstractQueryResultMessage lastMessage, Object timeout) {
         super(webTarget, authorizationFilter);
         this.lastMessage = lastMessage;
         this.timeout = timeout;
@@ -27,7 +27,7 @@ public class QueryPollerV1 extends AbstractPoller {
 
     @Override
     public AbstractQueryResultMessage parseResponse(Response pollResponse) throws Exception {
-        return InquireHandlerV1.parseResponse(pollResponse);
+        return InquireHandlerV2.parseResponse(pollResponse);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class QueryPollerV1 extends AbstractPoller {
             return true;
         }
 
-        WebTarget wt = webTarget.path("/v1/tql/poll").queryParam("id", lastMessage.getId());
+        WebTarget wt = webTarget.path("/v2/tql/poll").queryParam("id", lastMessage.getId());
         if (timeout != null) {
             wt = wt.queryParam("timeout", timeout);
         }

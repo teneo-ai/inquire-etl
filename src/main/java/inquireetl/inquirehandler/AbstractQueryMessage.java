@@ -1,6 +1,8 @@
-package inquireetl.inquirehandler.v1.models;
+package inquireetl.inquirehandler;
 
-public abstract class AbstractQueryMessage implements Message {
+import inquireetl.inquirehandler.v1.models.Message;
+
+public abstract class AbstractQueryMessage implements Message, inquireetl.inquirehandler.v2.models.Message {
 
     protected String id;
     protected String lds;
