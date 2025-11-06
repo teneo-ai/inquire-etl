@@ -2,6 +2,7 @@ package inquireetl.inquirehandler.v1;
 
 import inquireetl.inquirehandler.AbstractInquireHandler;
 import inquireetl.inquirehandler.AbstractPoller;
+import inquireetl.inquirehandler.AbstractQueryResultMessage;
 import inquireetl.inquirehandler.v1.models.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;

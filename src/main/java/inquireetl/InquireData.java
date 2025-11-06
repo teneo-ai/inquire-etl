@@ -42,7 +42,7 @@ public class InquireData {
             System.out.println("Starting processing data from " + backend_URL + " at " + new Date());
             LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap = new LinkedHashMap<>();
             AbstractInquireHandler inquireHandler = null;
-            if (apiVersion == null || apiVersion.equals(1)) {
+            if (Integer.valueOf(1).equals(apiVersion)) {
                 inquireHandler = new InquireHandlerV1(new URL(backend_URL), apiToken);
                 if (apiToken == null) {
                     inquireHandler.login(username, password);
@@ -54,7 +54,7 @@ public class InquireData {
                     generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
                 }
             }
-            else if (apiVersion.equals(2)) {
+            else if (apiVersion == null || apiVersion.equals(2)) {
                 inquireHandler = new InquireHandlerV2(new URL(backend_URL), apiToken);
                 if (apiToken == null) {
                     inquireHandler.login(username, password);
@@ -92,7 +92,7 @@ public class InquireData {
 
     /**
      *
-     * @param lds_name - Log Data Soruce Name
+     * @param lds_name - Log Data Source Name
      * @param from - Time limit
      * @param to - Time limit
      * @param timeout - Seconds before giving up on connection

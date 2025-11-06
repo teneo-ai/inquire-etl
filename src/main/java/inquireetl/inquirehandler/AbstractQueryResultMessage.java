@@ -1,7 +1,6 @@
-package inquireetl.inquirehandler.v1.models;
+package inquireetl.inquirehandler;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.Map;
 
 public abstract class AbstractQueryResultMessage extends AbstractQueryMessage {

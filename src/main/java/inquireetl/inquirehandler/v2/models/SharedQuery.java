@@ -1,13 +1,44 @@
 package inquireetl.inquirehandler.v2.models;
 
+import java.util.UUID;
+
 public class SharedQuery {
+
+    private UUID id;
+    private String publishedName;
+    private String description;
+    private String query;
+    private UUID ldsId;
+
+    public SharedQuery() {
+        // default constructor is needed
+    }
+
     public String getPublishedName() {
-        //Not Implemented
-        return null;
+        return publishedName;
+    }
+
+    public void setPublishedName(String publishedName) {
+        this.publishedName = publishedName;
     }
 
     public String getQuery() {
-        //Not Implemented
-        return null;
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setLdsId(UUID ldsId) {
+        this.ldsId = ldsId;
     }
 }

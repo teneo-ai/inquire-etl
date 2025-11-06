@@ -139,8 +139,8 @@ public class Main {
                         }
                     }
 
-                    if (apiVersion != null && apiVersion > 1) {
-                        throw new IllegalArgumentException("Only version 1 of the API is currently supported.");
+                    if (apiVersion != null && (apiVersion > 2 || apiVersion < 1)) {
+                        throw new IllegalArgumentException("Only versions 1 and 2 of the API are currently supported.");
                     }
 
                     //Will create output folder path from config or default to system Temp folder

@@ -1,4 +1,4 @@
-package inquireetl.inquirehandler.v1.models;
+package inquireetl.inquirehandler.v2.models;
 
 import inquireetl.inquirehandler.AbstractQueryMessage;
 
