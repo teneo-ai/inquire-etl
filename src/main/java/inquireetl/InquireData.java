@@ -7,7 +7,7 @@ package inquireetl;
 
 import inquireetl.inquirehandler.AbstractInquireHandler;
 import inquireetl.inquirehandler.AbstractPoller;
-import inquireetl.inquirehandler.v1.InquireHandlerV1;
+import inquireetl.inquirehandler.v3.InquireHandlerV3;
 import inquireetl.inquirehandler.v2.InquireHandlerV2;
 import java.net.URL;
 import java.text.DateFormat;
@@ -42,25 +42,25 @@ public class InquireData {
             System.out.println("Starting processing data from " + backend_URL + " at " + new Date());
             LinkedHashMap<String, Iterable<Map<String, Object>>> resultsMap = new LinkedHashMap<>();
             AbstractInquireHandler inquireHandler = null;
-            if (Integer.valueOf(1).equals(apiVersion)) {
-                inquireHandler = new InquireHandlerV1(new URL(backend_URL), apiToken);
-                if (apiToken == null) {
-                    inquireHandler.login(username, password);
-                }
-                List<inquireetl.inquirehandler.v1.models.SharedQuery> sharedQueries = ((InquireHandlerV1) inquireHandler).getSharedQueries(lds_name);
-                for (final inquireetl.inquirehandler.v1.models.SharedQuery publishedQuery : sharedQueries) {
-                    // Does not run queries that do not match the provided query name (unless "all").
-                    // It will also filter out the usage queries used by billing to monitor usage.
-                    generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
-                }
-            }
-            else if (apiVersion == null || apiVersion.equals(2)) {
+            if (Integer.valueOf(2).equals(apiVersion)) {
                 inquireHandler = new InquireHandlerV2(new URL(backend_URL), apiToken);
                 if (apiToken == null) {
                     inquireHandler.login(username, password);
                 }
                 List<inquireetl.inquirehandler.v2.models.SharedQuery> sharedQueries = ((InquireHandlerV2) inquireHandler).getSharedQueries(lds_name);
                 for (final inquireetl.inquirehandler.v2.models.SharedQuery publishedQuery : sharedQueries) {
+                    // Does not run queries that do not match the provided query name (unless "all").
+                    // It will also filter out the usage queries used by billing to monitor usage.
+                    generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
+                }
+            }
+            else if (apiVersion == null || apiVersion.equals(3)) {
+                inquireHandler = new InquireHandlerV3(new URL(backend_URL), apiToken);
+                if (apiToken == null) {
+                    inquireHandler.login(username, password);
+                }
+                List<inquireetl.inquirehandler.v3.models.SharedQuery> sharedQueries = ((InquireHandlerV3) inquireHandler).getSharedQueries(lds_name);
+                for (final inquireetl.inquirehandler.v3.models.SharedQuery publishedQuery : sharedQueries) {
                     // Does not run queries that do not match the provided query name (unless "all").
                     // It will also filter out the usage queries used by billing to monitor usage.
                     generateResults(queryName, dateFrom, dateTo, lds_name, timeout, esPageSize, resultsMap, inquireHandler, publishedQuery.getPublishedName());
